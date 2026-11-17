@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本地办公助手 v1.5.0 千问版 · 下载</title>
+<style>
+  :root{
+    --ink:#17324D; --ink2:#4A5A6B; --mute:#8C877D;
+    --line:#E4DED2; --bg:#FAF8F4; --card:#FFFFFF;
+    --accent:#B23B2E; --ok:#1F6F5C; --warn-bg:#FDF6E7; --warn-line:#E8D9A8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;font-size:15px;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:40px 22px 70px}
+  .kicker{font-size:12.5px;letter-spacing:.14em;color:var(--mute);text-transform:uppercase;margin-bottom:10px}
+  h1{font-size:29px;line-height:1.35;margin:0 0 14px;font-weight:700;letter-spacing:-.01em}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lead{font-size:15.5px;color:var(--ink2);margin:0 0 26px}
+  .lead b{color:var(--ink)}
+  h2{font-size:19px;margin:38px 0 14px;padding-left:11px;border-left:4px solid var(--accent);line-height:1.4}
+  h2 .num{color:var(--mute);font-weight:400;font-size:14px;margin-right:6px}
+  p{margin:0 0 13px}
+  .big{
+    display:grid;gap:10px;margin:26px 0 8px;
+  }
+  .item{
+    display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:15px 17px;text-decoration:none;color:inherit;
+    transition:border-color .16s, box-shadow .16s, transform .16s;
+  }
+  .item:hover{border-color:var(--ink);box-shadow:0 6px 20px rgba(23,50,77,.10);transform:translateY(-1px)}
+  .item .idx{
+    flex:none;width:34px;height:34px;border-radius:9px;background:#F1EDE4;color:var(--ink);
+    display:grid;place-items:center;font-weight:700;font-size:15px;
+  }
+  .item.on .idx{background:var(--accent);color:#fff}
+  .item .txt{flex:1;min-width:0}
+  .item .nm{font-weight:600;font-size:15px;margin-bottom:2px;word-break:break-all}
+  .item .sub{font-size:12.5px;color:var(--mute);line-height:1.5}
+  .item .go{
+    flex:none;font-size:13px;font-weight:600;color:#fff;background:var(--ink);
+    padding:7px 15px;border-radius:8px;white-space:nowrap;
+  }
+  .item.on .go{background:var(--accent)}
+  .box{border-radius:11px;padding:16px 18px;margin:16px 0;font-size:14px;line-height:1.72}
+  .box.warn{background:var(--warn-bg);border:1px solid var(--warn-line)}
+  .box.info{background:#F2F6F9;border:1px solid #CFDDE8}
+  .box b{color:var(--ink)}
+  ol.steps{margin:14px 0 0;padding-left:0;list-style:none;counter-reset:s}
+  ol.steps li{
+    position:relative;padding-left:34px;margin-bottom:13px;font-size:14.5px;color:var(--ink2);
+  }
+  ol.steps li::before{
+    counter-increment:s;content:counter(s);
+    position:absolute;left:0;top:2px;width:23px;height:23px;border-radius:50%;
+    background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;
+    display:grid;place-items:center;
+  }
+  ol.steps li b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#F4F0E8;font-weight:600;font-size:13px;color:var(--ink2)}
+  td:first-child{white-space:nowrap;font-weight:600}
+  .chk{list-style:none;padding:0;margin:12px 0}
+  .chk li{padding-left:24px;position:relative;margin-bottom:7px;font-size:14.5px;color:var(--ink2)}
+  .chk li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700}
+  .links{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
+  .links a{
+    font-size:13.5px;text-decoration:none;color:var(--ink);background:var(--card);
+    border:1px solid var(--line);padding:8px 15px;border-radius:8px;
+  }
+  .links a:hover{border-color:var(--ink)}
+  hr{border:0;border-top:1px solid var(--line);margin:36px 0 0}
+  .foot{font-size:12.5px;color:var(--mute);margin-top:18px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">v1.5.0 · 公文专家版</div>
+  <h1>本地办公助手 <em>三平台版</em></h1>
+  <p class="lead">
+    Windows、macOS、银河麒麟 / 统信 UOS，<b>同一份包</b>，解压就能用。<br>
+    不联网、不注册、不上传，材料只在这台电脑上处理。
+  </p>
+
+  <h2><span class="num">01</span>下载（3 个包，都要下）</h2>
+
+  <div class="big">
+    <a class="item on" href="https://www.workbuddy.cn/space/d/Ty5JY4i0AWmAyh0Xmu7EMm" target="_blank" rel="noopener">
+      <div class="idx">1</div>
+      <div class="txt">
+        <div class="nm">本地办公助手_v1.5.0_1.zip</div>
+        <div class="sub">约 1.0 GB · 程序本体 + 六平台引擎 + 说明书 + 讲解视频 + 模型第 1 段</div>
+      </div>
+      <div class="go">下载</div>
+    </a>
+
+    <a class="item" href="https://www.workbuddy.cn/space/d/b3Ir1GRctozAJoeLFB3zes" target="_blank" rel="noopener">
+      <div class="idx">2</div>
+      <div class="txt">
+        <div class="nm">本地办公助手_v1.5.0_2.zip</div>
+        <div class="sub">约 833 MB · 模型第 2 段</div>
+      </div>
+      <div class="go">下载</div>
+    </a>
+
+    <a class="item" href="https://www.workbuddy.cn/space/d/VohUdv3G7poiXdFUbVCwS5" target="_blank" rel="noopener">
+      <div class="idx">3</div>
+      <div class="txt">
+        <div class="nm">本地办公助手_v1.5.0_3.zip</div>
+        <div class="sub">约 832 MB · 模型第 3 段</div>
+      </div>
+      <div class="go">下载</div>
+    </a>
+  </div>
+
+  <div class="box warn">
+    <b>为什么非要切成 3 个？</b> 资料库单个文件上限是 <b>1 GB</b>，整包 2.5 GB 传不上去，只能把模型切成三段分开装。<br><br>
+    这是三个<b>普通压缩包</b>：没有安装程序、没有 bat 脚本、不用敲命令，也不用装 7-Zip。Windows 自带解压就够了。
+  </div>
+
+  <h2><span class="num">02</span>解压（三个都解到同一个文件夹）</h2>
+
+  <ol class="steps">
+    <li>硬盘上先建一个文件夹，比如 <code>D:\办公助手</code>。<b>别放桌面，别放 C 盘根目录，路径别太深。</b></li>
+    <li>右键第 1 个包 →「全部解压」，目标填 <code>D:\办公助手</code>。</li>
+    <li>第 2、3 个照做，<b>目标还是这个文件夹</b>。提示「目标文件夹已存在，是否合并」点 <b>是</b>，提示覆盖点「全部」。</li>
+    <li>三个都解压完，<code>D:\办公助手\本地办公助手_v1.5.0</code> 里就是完整程序。</li>
+  </ol>
+
+  <div class="box info">
+    <b>第一次启动会多等 1～2 分钟。</b>它要把 3 个模型分片拼回一个完整文件，只做这一次，以后就快了。
+    黑窗口里会写「正在把模型分片拼成完整文件」，不是卡住，别关窗口。
+  </div>
+
+  <h2><span class="num">03</span>启动（看你的系统）</h2>
+
+  <table>
+    <tr><th>系统</th><th>双击这个</th><th>第一次的提示</th></tr>
+    <tr><td>Windows 10 / 11</td><td><code>启动-Windows.bat</code></td><td>可能弹「Windows 已保护你的电脑」→ 点「更多信息」→「仍要运行」</td></tr>
+    <tr><td>macOS（Intel / M 系列）</td><td><code>启动-Mac.command</code></td><td>右键 →「打开」→ 再点一次「打开」</td></tr>
+    <tr><td>银河麒麟 / 统信 UOS</td><td><code>启动-Linux.sh</code></td><td>右键 →「属性」→ 勾上「允许作为程序执行」，再双击；或在终端里 <code>bash 启动-Linux.sh</code></td></tr>
+  </table>
+
+  <div class="box info">
+    <b>国产电脑说明：</b>包里自带了运行环境，<b>不需要系统装新版本 glibc</b>，麒麟 V10、UOS 20 直接能跑。
+    兆芯、海光走 x86 引擎，飞腾、鲲鹏走 ARM 引擎，程序按 CPU 自动选。<br>
+    龙芯（LoongArch）和申威（SW64）目前没有现成引擎，需要单独编，用之前先问我。
+  </div>
+
+  <div class="box warn">
+    <b>启动那个黑窗口不要关</b>，关了就等于退出程序。用完直接关窗口。<br>
+    第一次启动要序列号：黑窗口里显示 8 位机器码（形如 <code>AB12-CD34</code>），发给我换一串 <code>BGS9-…</code> 粘回去回车，以后不再问。
+  </div>
+
+  <h2><span class="num">04</span>跑起来该看到什么</h2>
+
+  <ul class="chk">
+    <li>右上角版本号 <b>v1.5.0</b></li>
+    <li>左下角 <b>模型：通义千问 4B</b>，下面没有下拉框（只有一个模型，不给你选错的机会）</li>
+    <li>打开就是「公文专家」技能（<b>默认技能</b>，31 个内置随时可换）</li>
+    <li>任意一条回复下面有 <b>「公文核稿」</b> 和 <b>「导出公文」</b> 两个按钮</li>
+    <li>右上角「帮助」里有四个入口：图文说明 / 看视频 / 提示词模板 / 关闭</li>
+  </ul>
+
+  <h2><span class="num">05</span>包里有什么</h2>
+
+  <table>
+    <tr><th>内容</th><th>位置</th></tr>
+    <tr><td>软件本体</td><td>app 文件夹（公文专家版界面）</td></tr>
+    <tr><td>六个平台引擎</td><td>引擎 文件夹（Windows x64/ARM、macOS Intel/M 芯、Linux x64/ARM，含自带运行库）</td></tr>
+    <tr><td>模型</td><td>模型 文件夹（通义千问 4B，2.4 GB，解压后是 3 个分片，首次启动自动拼回）</td></tr>
+    <tr><td>提示词模板</td><td>提示词模板.html（20 个文种 + 6 类表格，双击就开）</td></tr>
+    <tr><td>图文说明</td><td>使用说明.html</td></tr>
+    <tr><td>讲解视频</td><td>使用说明视频.mp4（约 5 分钟，带配音）</td></tr>
+  </table>
+
+  <h2><span class="num">06</span>装不上怎么办</h2>
+
+  <table>
+    <tr><th>现象</th><th>怎么办</th></tr>
+    <tr><td>点下载没反应</td><td>再点一次；或换 Edge / Chrome。文件页里点右上角下载图标。</td></tr>
+    <tr><td>提示「模型不完整：现在只有 N 个分片」</td><td>还有包没解压。把剩下的一两个包也解压到<b>程序所在的那个文件夹</b>，提示「目标文件夹已存在」点「是」，覆盖点「全部」。</td></tr>
+    <tr><td>黑窗口里一堆 <code>'xx' 不是内部或外部命令</code>，最后说「没有找到模型文件」</td><td>这是早期版本的启动脚本有毛病，模型其实已经解压好了。<b>不用重下 1GB</b>：下载 <a href="https://www.workbuddy.cn/space/d/MErhqLI3GVOuABrzJEqwrN" target="_blank" rel="noopener">启动脚本_修正版</a>（4 KB），解压后得到的 <code>启动-Windows.bat</code> 覆盖到程序文件夹里同名文件，再双击。</td></tr>
+    <tr><td>Windows 提示「已保护你的电脑」</td><td>点「更多信息」→「仍要运行」。没做数字签名的启动脚本都会这样，不是病毒。</td></tr>
+    <tr><td>点启动输入序列号后，引擎窗口闪一下就没了</td><td>新版启动脚本会自动换保守参数、再自动换包内备用引擎重试，一般不用管。还不行就双击 <code>诊断-Windows.bat</code>，看「退出码」一行：杀软拦截（把整个文件夹加白名单）、Win11「智能应用控制」拦截（设置 → 隐私和安全性 → Windows 安全中心 → 应用和浏览器控制 → 智能应用控制，关掉再启动）、缺 VC++ 运行库（按诊断提示装）。在压缩包里直接双击也会这样，先解压出来。</td></tr>
+    <tr><td>国产系统报 GLIBC 错误</td><td>不该出现——包内已带运行环境。真碰到了，把报错整段发我，同时告诉我 CPU 型号和 <code>ldd --version</code> 第一行。</td></tr>
+    <tr><td>粘了一大段材料，提示「太长放不下」</td><td>8G 电脑一次粘不下几万字。把材料<b>存成文件拖进来</b>，软件会自动分批处理，不受这个限制。</td></tr>
+    <tr><td>浏览器没自动打开</td><td>手动开浏览器，地址栏输入 <code>127.0.0.1:8080</code>。</td></tr>
+    <tr><td>第一次启动停在「正在拼装模型」</td><td>正常，2.4 GB 拼一次要几十秒到两分钟。硬盘灯在闪就是在干活。</td></tr>
+  </table>
+
+  <h2><span class="num">07</span>不下载也能先看</h2>
+  <div class="links">
+    <a href="https://www.workbuddy.cn/space/d/Rilv3hC3usvjICdwXPtBFi" target="_blank" rel="noopener">图文使用说明（在线）</a>
+    <a href="https://www.workbuddy.cn/space/d/0mITWhabWL2hmrvpFPxYgt" target="_blank" rel="noopener">提示词模板（在线）</a>
+    <a href="https://www.workbuddy.cn/space/d/I85VJAjDa5Em0PyUoDAUlL" target="_blank" rel="noopener">讲解视频（4 分 49 秒）</a>
+  </div>
+
+  <hr>
+  <div class="foot">
+    <b>这一版只带通义千问 4B</b>，没有 8B。8B 在 8G 内存上装不下，会把模型挤到硬盘交换，实测从 13 字/秒掉到 1.6 字/秒。<br>
+    不生成红头文件，不保证政策提法正确，核稿只查格式和结构。全程不联网、不上传，材料只在这台电脑上处理。
+  </div>
+
+</div>
+</body>
+</html>

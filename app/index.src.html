@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>本地办公助手</title>
+<style>
+:root{
+  --ink:#17324D; --ink2:#3A5269; --gray:#787E88; --line:#DBD6CC;
+  --paper:#F7F5F0; --card:#FFFFFF; --red:#AA3E30; --amber:#A87C26;
+  --ok:#3F7A5A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  background:var(--paper);color:var(--ink);font-size:15px;line-height:1.7;
+  display:flex;height:100vh;overflow:hidden;
+}
+aside{width:232px;flex:0 0 232px;background:#F1EDE4;border-right:1px solid var(--line);display:flex;flex-direction:column}
+.brand{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:.5px}
+.brand p{font-size:11.5px;color:var(--gray);margin-top:3px}
+.scenes{flex:1;overflow-y:auto;padding:8px 10px}
+.scenes .label{font-size:11px;color:var(--gray);padding:6px 8px 4px;letter-spacing:1px}
+.scene{display:block;width:100%;text-align:left;border:0;background:transparent;padding:6px 10px;
+  border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--ink2);font-family:inherit;transition:.12s}
+.scene:hover{background:#E6E0D3}
+.scene.on{background:var(--ink);color:#fff}
+.scene small{display:block;font-size:11px;opacity:.62;margin-top:1px;line-height:1.5}
+/* 任务列表 */
+.newtask{margin:10px 10px 4px;width:calc(100% - 20px);background:var(--ink);color:#fff;border:0;border-radius:8px;padding:8px 0;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:0 0 auto}
+.newtask:hover{background:#0F2438}
+.tasks{flex:1;overflow-y:auto;padding:4px 10px 8px}
+.task{position:relative;padding:7px 26px 7px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px;transition:.12s}
+.task:hover{background:#E6E0D3}
+.task.on{background:var(--ink);color:#fff}
+.task.on .tm{color:#B9C4D2}
+.task .tt{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.45}
+.task .tm{font-size:10.5px;color:var(--gray);margin-top:1px}
+.task .tdel{position:absolute;right:6px;top:9px;border:0;background:transparent;color:inherit;opacity:0;font-size:15px;cursor:pointer;line-height:1;font-family:inherit}
+.task:hover .tdel{opacity:.5}
+.task .tdel:hover{opacity:1;color:var(--red)}
+.task.on .tdel:hover{color:#FFB3A6}
+.tempty{font-size:11.5px;color:var(--gray);padding:16px 8px;line-height:1.8;text-align:center}
+/* 技能条 */
+.skill-bar{display:flex;align-items:center;gap:8px;padding:6px 9px;margin-bottom:7px;background:#F1EDE4;border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none}
+.skill-bar:hover{border-color:#B9AE99}
+.sb-tag{font-size:10px;color:#fff;background:var(--ink2);border-radius:4px;padding:1px 6px;letter-spacing:1px;flex:0 0 auto}
+.skill-bar b{font-size:13px;color:var(--ink);flex:0 0 auto;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-desc{flex:1;min-width:0;font-size:11.5px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-arrow{font-size:11px;color:var(--gray);flex:0 0 auto}
+/* 技能选择弹层 */
+#skillPick{position:fixed;inset:0;background:rgba(23,50,77,.42);display:none;place-items:center;z-index:70}
+#skillPick.on{display:grid}
+.pk-box{width:660px;max-width:94vw;max-height:80vh;overflow-y:auto;background:#FBF9F4;border-radius:14px;padding:18px 20px 22px;box-shadow:0 18px 50px rgba(23,50,77,.25)}
+.pk-head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.pk-head h3{font-size:15px}
+.pk-sub{font-size:11.5px;color:var(--gray);flex:1}
+.pk-head button{border:1px solid var(--line);background:#fff;border-radius:6px;font-family:inherit;font-size:12px;padding:3px 10px;cursor:pointer;color:var(--ink2)}
+.pk-head button:hover{background:#F1EDE4}
+.pk-group{font-size:11px;color:var(--gray);letter-spacing:1px;margin:14px 0 7px}
+.pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pk-item{text-align:left;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 12px;cursor:pointer;font-family:inherit;transition:.12s}
+.pk-item:hover{border-color:#B9AE99;transform:translateY(-1px)}
+.pk-item.on{border-color:var(--ink);background:#EFF3F8}
+.pk-item.off{opacity:.45}
+.pk-item b{display:block;font-size:13px;color:var(--ink)}
+.pk-item span{display:block;font-size:11.5px;color:var(--gray);margin-top:2px;line-height:1.5}
+.side-foot{padding:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--gray)}
+#modelSel{display:block;width:100%;margin-top:4px;font-size:11.5px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+#modelSel[hidden]{display:none!important}
+.thinkbox{margin-top:10px;font-size:12px;color:var(--gray)}
+.thinkbox summary{cursor:pointer;user-select:none}
+.thinkbox summary:hover{color:var(--ink)}
+.think-body{margin-top:6px;padding:8px 10px;background:var(--bg,#f5f5f4);border:1px solid var(--line);border-radius:8px;line-height:1.6;max-height:220px;overflow:auto;white-space:pre-wrap}
+.side-foot div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#C9C2B4;margin-right:6px;vertical-align:1px}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--red)} .dot.wait{background:var(--amber)}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+header{height:54px;flex:0 0 54px;display:flex;align-items:center;gap:10px;padding:0 22px;
+  border-bottom:1px solid var(--line)}
+header .title{font-weight:700;font-size:14.5px}
+header .tag{font-size:11px;color:var(--gray);border:1px solid var(--line);border-radius:20px;padding:1px 9px}
+header .spacer{flex:1}
+.btn{font-family:inherit;font-size:12.5px;color:var(--ink2);background:var(--card);
+  border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer}
+.btn:hover{border-color:#BFB6A4;color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#chat{flex:1;overflow-y:auto;padding:22px 0 8px}
+.inner{max-width:800px;margin:0 auto;padding:0 24px}
+.msg{display:flex;gap:12px;margin-bottom:22px}
+.msg .who{flex:0 0 30px;height:30px;border-radius:7px;display:grid;place-items:center;
+  font-size:11px;font-weight:700;letter-spacing:.5px}
+.msg.me .who{background:#E6E0D3;color:var(--ink2)}
+.msg.ai .who{background:var(--ink);color:#fff}
+.bubble{flex:1;min-width:0;padding-top:3px}
+.msg.me .bubble{color:var(--ink2);white-space:pre-wrap}
+.bubble .tools{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.bubble .tools{opacity:.62;transition:.15s}
+.msg.ai:hover .bubble .tools{opacity:1}
+.mini{font-family:inherit;font-size:11.5px;color:var(--gray);background:transparent;border:0;cursor:pointer;padding:2px 0}
+.mini:hover{color:var(--ink);text-decoration:underline}
+.body p{margin:0 0 10px}
+.body ul,.body ol{margin:6px 0 10px 22px}
+.body li{margin:3px 0}
+.body h1,.body h2,.body h3{font-size:15px;margin:14px 0 8px}
+.body strong{font-weight:700}
+.body code{background:#EFEBE1;padding:1px 5px;border-radius:4px;font-size:13px}
+.body pre{background:#1E2B38;color:#E8E3D8;padding:12px 14px;border-radius:8px;overflow-x:auto;margin:10px 0}
+.body pre code{background:transparent;color:inherit;padding:0}
+.body table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px;background:#fff}
+.body th,.body td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+.body th{background:#F1EDE4;font-weight:700}
+.body blockquote{border-left:3px solid var(--line);padding-left:12px;color:var(--gray);margin:8px 0}
+.cursor{display:inline-block;width:7px;height:15px;background:var(--red);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.waiting{color:var(--gray);font-size:13.5px}
+.waiting i{font-style:normal;letter-spacing:2px;animation:dots 1.4s infinite}
+@keyframes dots{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
+.welcome{max-width:800px;margin:0 auto;padding:34px 24px}
+.welcome h2{font-size:21px;font-weight:700;margin-bottom:6px;letter-spacing:.3px}
+.welcome .sub{color:var(--gray);font-size:13.5px;margin-bottom:22px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;cursor:pointer;transition:.14s}
+.card:hover{border-color:#B9AE99;transform:translateY(-1px)}
+.card b{display:block;font-size:14px;margin-bottom:3px}
+.card span{font-size:12.5px;color:var(--gray);line-height:1.55}
+.note{margin-top:20px;font-size:12px;color:var(--gray);border-top:1px dashed var(--line);padding-top:12px;line-height:1.7}
+.note b{color:var(--ink2)}
+.composer{flex:0 0 auto;padding:8px 24px 14px}
+.composer .inner{padding:0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 2px 10px rgba(23,50,77,.04)}
+.box:focus-within{border-color:#B9AE99}
+textarea{width:100%;border:0;outline:0;resize:none;font-family:inherit;font-size:14.5px;line-height:1.65;color:var(--ink);background:transparent;max-height:190px}
+textarea::placeholder{color:#A8A296}
+.row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.row .spacer{flex:1}
+.count{font-size:11px;color:#A8A296}
+.send{background:var(--ink);color:#fff;border:0;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:13px;cursor:pointer;font-weight:600}
+.send:hover{background:#0F2438}
+.send.stop{background:var(--red)}
+.file-chip em{font-style:normal;font-size:10.5px;background:#E7E1D4;color:#7A6E58;border-radius:3px;padding:1px 4px;margin-right:4px;vertical-align:1px}
+.chip-wrap{max-height:134px;overflow-y:auto;margin-bottom:2px}
+.chip-wrap::-webkit-scrollbar{width:5px}
+.chip-wrap::-webkit-scrollbar-thumb{background:#D8D2C4;border-radius:3px}
+.chip-foot{display:flex;align-items:center;gap:10px;margin:2px 0 5px}
+.chip-sum{font-size:11.5px;color:var(--gray)}
+.chip-warn{font-size:11.5px;color:#8A5B2E;background:#FBF0DF;border-radius:5px;padding:4px 8px;margin:0 0 6px}
+.file-chip{display:inline-flex;align-items:center;gap:6px;background:#EFEBE1;border-radius:6px;padding:3px 9px;font-size:12px;color:var(--ink2);margin:0 6px 6px 0}
+.file-chip b{font-weight:600}
+.file-chip i{cursor:pointer;font-style:normal;color:var(--gray)}
+.hint{text-align:center;font-size:11px;color:#A8A296;margin-top:7px}
+#drop{position:fixed;inset:0;background:rgba(23,50,77,.55);display:none;place-items:center;color:#fff;font-size:18px;z-index:50}
+#drop.on{display:grid}
+#mask{position:fixed;inset:0;background:rgba(23,50,77,.5);display:none;place-items:center;z-index:60}
+#mask.on{display:grid}
+.maskbox{background:#fff;max-width:430px;padding:26px 28px;border-radius:12px;text-align:left}
+.maskbox h3{font-size:16px;margin-bottom:10px}
+.maskbox p{font-size:13.5px;color:var(--ink2);margin-bottom:8px;line-height:1.75}
+.maskbox code{background:#F1EDE4;padding:1px 5px;border-radius:4px;font-size:12.5px}
+.maskbox .btn{margin-top:12px}
+/* ---------- 资料 / 记忆抽屉 ---------- */
+#drawer{position:fixed;top:0;right:0;height:100%;width:396px;max-width:92vw;background:#FBF9F5;
+  border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(23,50,77,.10);
+  transform:translateX(100%);transition:.22s ease;z-index:70;display:flex;flex-direction:column}
+#drawer.on{transform:none}
+.dr-head{padding:16px 18px 0;border-bottom:1px solid var(--line)}
+.dr-head .t{font-size:15px;font-weight:700}
+.dr-head .x{position:absolute;top:14px;right:14px;border:0;background:transparent;font-size:20px;color:var(--gray);cursor:pointer;line-height:1}
+.tabs{display:flex;gap:16px;margin-top:12px}
+.tab{border:0;background:transparent;font-family:inherit;font-size:13.5px;color:var(--gray);
+  padding:0 0 9px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);font-weight:700;border-bottom-color:var(--ink)}
+.dr-body{flex:1;overflow-y:auto;padding:14px 18px}
+.dr-foot{border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:10px;flex-wrap:wrap}
+.item{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:9px;position:relative}
+.item b{font-size:13px;display:block;margin-bottom:2px;padding-right:22px;word-break:break-all}
+.item span{font-size:11.5px;color:var(--gray)}
+.item .del{position:absolute;top:8px;right:9px;border:0;background:transparent;color:#B7AFA0;cursor:pointer;font-size:15px;line-height:1}
+.item .del:hover{color:var(--red)}
+.item p{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.6;max-height:66px;overflow:hidden;padding-right:18px}
+.empty{font-size:12.5px;color:var(--gray);text-align:center;padding:26px 0;line-height:1.8}
+.dr-add{background:#fff;border:1px dashed var(--line);border-radius:9px;padding:10px;margin-bottom:14px}
+.dr-add textarea{width:100%;border:0;outline:0;font-family:inherit;font-size:13px;resize:vertical;min-height:52px;background:transparent}
+.dr-add .r{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.tipline{font-size:11.5px;color:var(--gray);background:#F1EDE4;border-radius:7px;padding:8px 10px;margin-bottom:12px;line-height:1.65}
+.refs{font-size:11.5px;color:var(--gray);margin-top:6px}
+/* ---------- 技能分组 ---------- */
+.glabel{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray);
+  padding:10px 8px 3px;letter-spacing:1px;cursor:pointer;user-select:none}
+.glabel:hover{color:var(--ink2)}
+.glabel .ar{font-size:9px;transition:transform .15s;display:inline-block}
+.glabel.closed .ar{transform:rotate(-90deg)}
+.glabel .n{margin-left:auto;font-size:10px;color:#B0A998}
+.gwrap{overflow:hidden}
+.skill-item{position:relative}
+.skill-item .src{display:block;font-size:10px;color:#B0A998;margin-top:1px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.src-line{font-size:11px;color:#9A958A;margin:2px 0 10px;line-height:1.6;word-break:break-all}
+.sk-chip{display:inline-block;font-size:10px;border:1px solid var(--line);border-radius:4px;
+  padding:0 4px;color:var(--gray);margin-left:5px;vertical-align:1px}
+.badge{font-size:10.5px;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px;
+  background:#EAF3EE;color:#2C5C42}
+.badge.off{background:#FBEAE7;color:#8A3325}
+.form-row{display:flex;gap:8px;margin-bottom:8px}
+.form-row input,.form-row select{flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  padding:6px 9px;font-family:inherit;font-size:12.5px;background:#fff;color:var(--ink)}
+.form-row select{flex:0 0 96px}
+#skSys{width:100%;min-height:80px;border:0;outline:0;font-family:inherit;font-size:12.5px;
+  resize:vertical;background:transparent;line-height:1.65;color:var(--ink)}
+.sk-act{display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
+.sk-act button{border:0;background:transparent;color:var(--gray);font-family:inherit;font-size:11.5px;
+  cursor:pointer;padding:0;text-decoration:none}
+.sk-act button:hover{color:var(--ink);text-decoration:underline}
+/* 帮助弹层 */
+#helpMask{position:fixed;inset:0;background:rgba(23,50,77,.42);display:none;place-items:center;z-index:80}
+#helpMask.on{display:grid}
+.help-card{width:560px;max-width:92vw;max-height:84vh;overflow-y:auto;background:#FBF9F4;border-radius:14px;
+  padding:22px 26px 20px;box-shadow:0 18px 50px rgba(23,50,77,.22);text-align:left}
+.help-card h3{font-size:16px;margin-bottom:2px}
+.help-card .sub{font-size:11.5px;color:var(--gray);margin-bottom:14px}
+.help-card h4{font-size:13px;margin:13px 0 5px;color:var(--ink)}
+.help-card p,.help-card li{font-size:12.5px;color:var(--ink2);line-height:1.75;margin-bottom:4px}
+.help-card ul{margin:2px 0 4px 20px}
+.help-card code{background:#F1EDE4;padding:1px 5px;border-radius:4px;font-size:12px}
+.help-card .acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;
+  position:sticky;bottom:-20px;background:#FBF9F4;padding:10px 0 14px;box-shadow:0 -12px 18px -12px rgba(23,50,77,.18)}
+.help-card .acts button{flex:1;background:var(--ink);color:#fff;border:0;border-radius:8px;
+  padding:8px 0;font-family:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.help-card .acts button.ghost{background:transparent;color:var(--ink2);border:1px solid var(--line)}
+.help-card .acts button:hover{background:#0F2438}
+.help-card .acts button.ghost:hover{background:#F1EDE4}
+.help-card .cc{font-size:10.5px;color:#9A9384;margin-top:12px;text-align:center}
+
+/* 作者信息 */
+.author{margin:0 10px 8px;padding:9px 11px;background:#FBF4E4;border:1px solid #E7DABD;
+  border-left:3px solid var(--amber);border-radius:8px;line-height:1.55}
+.author b{display:block;font-size:12px;color:var(--ink);font-weight:700}
+.author .wx{font-size:11.5px;color:#7A5E22;margin-top:2px}
+.author .wx u{text-decoration:none;font-weight:700;letter-spacing:.4px;border-bottom:1px dashed #C9AE72;cursor:pointer}
+.author .wx u:hover{color:var(--ink);border-bottom-color:var(--ink)}
+.author .cc{font-size:10.5px;color:#9A8A6A;margin-top:3px;letter-spacing:.2px}
+header .btn.wx{border-color:#E0CFA6;background:#FBF4E4;color:#7A5E22}
+header .btn.wx:hover{background:#F6EACD}
+.foot-author{margin-top:16px;padding-top:10px;border-top:1px dashed var(--line);font-size:11.5px;color:#9A9384}
+.foot-author b{color:var(--ink2)}
+/* 导出结果条 */
+.exp-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:8px 11px;
+  background:#EDF4EF;border:1px solid #C9DED1;border-radius:8px;font-size:12px;color:#2C5C42}
+.exp-bar .tick{font-weight:700}
+.exp-bar .fn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:#3A5269;
+  background:#fff;border:1px solid #D7E3DA;border-radius:4px;padding:1px 6px;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-bar .sub{color:#6B8574;font-size:11px}
+.exp-bar button{margin-left:auto;border:1px solid #BFD5C6;background:#fff;color:#2C5C42;border-radius:5px;
+  font-family:inherit;font-size:11.5px;padding:2px 8px;cursor:pointer}
+.exp-bar button:hover{background:#F3F9F5}
+.exp-bar.warn{background:#FBF0DF;border-color:#E7D2AE;color:#7A5320}
+.exp-bar.warn button{border-color:#E0C69A;color:#7A5320}
+/* 作者卡片弹层 */
+#wxMask{position:fixed;inset:0;background:rgba(23,50,77,.42);display:none;place-items:center;z-index:80}
+#wxMask.on{display:grid}
+.wx-card{width:330px;max-width:90vw;background:#FBF9F4;border-radius:14px;padding:22px 22px 18px;
+  box-shadow:0 18px 50px rgba(23,50,77,.22);text-align:center}
+.wx-card h3{font-size:16px;margin-bottom:4px}
+.wx-card .sub{font-size:11.5px;color:var(--gray);margin-bottom:14px}
+.wx-card .num{font-size:22px;font-weight:700;letter-spacing:1.2px;color:var(--ink);
+  background:#F1EDE4;border-radius:9px;padding:10px 0;user-select:all}
+.wx-card .tip{font-size:11.5px;color:var(--gray);margin-top:8px}
+.wx-card .cc{font-size:11px;color:#9A9384;margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+.wx-card button{margin-top:12px;width:100%;background:var(--ink);color:#fff;border:0;border-radius:8px;
+  padding:8px 0;font-family:inherit;font-size:13px;cursor:pointer}
+.wx-card button:hover{background:#0F2438}
+@media(max-width:820px){aside{display:none}.cards{grid-template-columns:1fr}header .btn.wx{display:none}}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand">
+    <h1>本地办公助手</h1>
+    <p>本机运行 · 不联网 · 不上传</p>
+  </div>
+  <button class="newtask" id="btnNewTask">＋ 新建任务</button>
+  <div class="tasks" id="taskList"><div class="tempty">正在读取任务…</div></div>
+  <div class="author">
+    <b>本工具作者 · 汤姆汤汤汤</b>
+    <div class="wx">微信 <u id="wxCopy" title="点一下复制微信号">zx6530022</u></div>
+    <div class="cc">© 2026 汤姆汤汤汤　保留所有权利</div>
+  </div>
+  <div class="side-foot">
+    <div><span class="dot" id="dot"></span><span id="stateText">正在连接引擎…</span></div>
+    <div style="margin-top:6px">模型：<span id="modelName">—</span><select id="modelSel" hidden title="选一个模型，下一条消息开始就用它"></select></div>
+    <div style="margin-top:6px" title="序列号与这台电脑绑定">授权：<span id="licText">读取中…</span></div>
+  </div>
+</aside>
+
+<main>
+  <header>
+    <span class="title" id="hTitle">自由对话</span>
+    <span class="tag">离线</span>
+    <span class="spacer"></span>
+    <button class="btn" id="btnHelp">帮助</button>
+    <button class="btn" id="btnSkills">技能库</button>
+    <button class="btn" id="btnDrawer">资料/记忆</button>
+    <button class="btn" id="btnClear">清空</button>
+    <button class="btn wx" id="btnWx">联系作者</button>
+    <button class="btn" id="btnExport">导出全文</button>
+  </header>
+
+  <div id="chat">
+    <div class="welcome" id="welcome">
+      <h2>把材料丢进来，说一句你要什么。</h2>
+      <div class="sub">Word / Excel / PPT / PDF / WPS / ODF / csv / txt 都能直接读；内容只在这台电脑上处理，不联网、不上传。</div>
+      <div class="cards">
+        <div class="card" data-s="polish"><b>润色改稿</b><span>口语改书面、长句拆短、去掉空话</span></div>
+        <div class="card" data-s="notice"><b>起草文稿</b><span>通知、请示、报告，按结构写</span></div>
+        <div class="card" data-s="table"><b>整理成表格</b><span>一段文字变表格，能存成 Excel</span></div>
+        <div class="card" data-s="key"><b>提取要点</b><span>长文压成清单，事实和数字不丢</span></div>
+      </div>
+      <div class="note">
+        <b>先说清楚它的斤两：</b>这是跑在本机的小模型（已按你电脑的性能自动选好，不用设置），改写、总结、按格式产出够用；<b>但它会一本正经地编条款号和数字</b>，凡是「依据第几条」「占比多少」这类内容，必须自己对原件核一遍。它也不能看图、不能生成图片。<br>
+        <b>想让它照着你们单位的规矩来：</b>点右上角「资料/记忆」，把制度、模板、常用口径存进去，以后提问会自动用上。要写公文、做表、出 PPT 大纲，点输入框上方那条「技能」换一个干法，或者右上角「技能库」。<br><b>左边一个任务就是一段独立的对话</b>，互相不打扰——A 事聊完点「＋ 新建任务」再聊 B 事。<br>
+        <b>想要文件不用自己点：</b>直接说「把这些数据导出成 Excel」，它会一边答一边把文件下到「下载」文件夹。
+      </div>
+      <div class="foot-author">本工具由 <b>汤姆汤汤汤</b> 制作 · 微信 <b>zx6530022</b> · © 2026 保留所有权利</div>
+    </div>
+    <div class="inner" id="list"></div>
+  </div>
+
+  <div class="composer">
+    <div class="inner">
+      <div class="box">
+        <div class="skill-bar" id="skillBar" title="点开换一个技能：它决定 AI 按什么结构、什么口气干活">
+          <span class="sb-tag">技能</span>
+          <b id="skillName">自由对话</b>
+          <span class="sb-desc" id="skillDesc">想到什么说什么</span>
+          <span class="sb-arrow">换个技能 ▾</span>
+        </div>
+        <div id="chips"></div>
+        <textarea id="input" rows="1" placeholder="粘贴文稿，或直接说要求…（Ctrl + Enter 发送）"></textarea>
+        <div class="row">
+          <button class="btn" id="btnFile">＋ 添加文件</button>
+          <input type="file" id="file" multiple accept=".txt,.md,.markdown,.csv,.tsv,.json,.xml,.log,.srt,.rtf,.html,.htm,.doc,.docx,.docm,.xls,.xlsx,.xlsm,.ppt,.pptx,.pptm,.odt,.ods,.odp,.pdf" hidden>
+          <input type="file" id="fileKB" multiple accept=".txt,.md,.markdown,.csv,.tsv,.json,.xml,.log,.srt,.rtf,.html,.htm,.doc,.docx,.docm,.xls,.xlsx,.xlsm,.ppt,.pptx,.pptm,.odt,.ods,.odp,.pdf" hidden>
+          <span class="count" id="count"></span>
+          <span class="spacer"></span>
+          <button class="send" id="btnSend">发送</button>
+        </div>
+      </div>
+      <div class="hint">Word / Excel / PPT / PDF / WPS / ODF / csv / txt 都能读 · 只取文字和表格，不带版式，不认扫描件<br>说「导出成 Excel / Word / PPT」就直接给文件，不用再点按钮</div>
+    </div>
+  </div>
+</main>
+
+<div id="skillPick"><div class="pk-box">
+  <div class="pk-head"><h3>换个技能</h3><span class="pk-sub">它决定 AI 按什么结构、什么口气干活；每个任务记住自己用的技能</span><button id="pickClose">关闭</button></div>
+  <div id="pickList"></div>
+</div></div>
+<div id="wxMask"><div class="wx-card">
+  <h3>本地办公助手</h3>
+  <div class="sub">作者：汤姆汤汤汤　·　使用问题、发号、定制</div>
+  <div class="num" id="wxNum">zx6530022</div>
+  <div class="tip">微信搜索上面的号即可添加，备注「办公助手」</div>
+  <button id="wxCopy2">复制微信号</button>
+  <div class="cc">© 2026 汤姆汤汤汤　保留所有权利<br>本工具仅供授权机器使用，请勿转发</div>
+</div></div>
+<div id="helpMask"><div class="help-card">
+  <h3>怎么用，一分钟看懂</h3>
+  <div class="sub">更详细的图文说明、提示词模板、演示视频，点下面的按钮</div>
+  <h4>三步就能用（不用设置任何东西）</h4>
+  <ul>
+    <li>双击「<b>启动-Windows</b>」（Mac 双击「启动-Mac」），等浏览器自己打开。软件<b>按你电脑的内存自动调好参数</b>，你什么都不用设。</li>
+    <li>把稿子<b>粘进输入框</b>，或点「＋ 添加文件」选 Word / Excel / PPT / PDF / txt，说要什么，发送。</li>
+    <li>想要文件就直接说「<b>导出成 Excel / Word / PPT</b>」，做完自动存到下载文件夹。</li>
+  </ul>
+  <h4>写公文：说人话就行</h4>
+  <ul>
+    <li>点输入框上方的「技能」，选「<b>公文专家</b>」，像跟同事说话一样说事：<b>「下周三上午九点在三楼开会，通知各科室带自查表」</b>。</li>
+    <li>它自己判该用哪个文种（通知 / 请示 / 报告 / 函 / 纪要等 20 个），按那个文种的结构写，最后告诉你按什么写的。</li>
+    <li>写完点回复下面的「<b>公文核稿</b>」：几毫秒查出文种写错、结语不对、序号跳级、日期用汉字这些硬伤，<b>不联网、不烧 token</b>。</li>
+    <li>点「<b>导出公文</b>」，出的是 GB/T 9704 版式 Word（A4、三号仿宋、28 磅行距、页码单右双左）。<b>不生成红头</b>，套你们单位红头纸打印。</li>
+  </ul>
+  <h4>做表格：要等多久（心里有个数）</h4>
+  <ul>
+    <li>发文件后，页面立刻告诉你<b>「共多少字、预计几分钟」</b>；做的过程中一直显示「第 3/11 段 · 预计还需 2 分 10 秒」。数字在动就说明在干活。</li>
+    <li>实测（普通 8G 电脑）：1 千字 20～50 秒；5 千字 1～2 分钟；1 万字约 3 分钟；2.4 万字约 9～10 分钟；<b>材料规整的走极速通道，1 秒出表</b>。</li>
+    <li>超过 <b>3 万字</b>（比如 20MB 的 txt）自动改成「<b>智能抽读</b>」：头中尾均匀读 10 段，6～9 分钟出结果，结果里会写明是抽读、不是逐字全量。要全量就说「全文」，但整篇逐字任何电脑都要几个小时。</li>
+    <li>中途点「停止」不会丢，之后说「<b>接着处理</b>」就接着来。</li>
+  </ul>
+  <h4>觉得慢、像没反应？</h4>
+  <ul>
+    <li>先看读秒和分段进度是不是在动。<b>超过 2 分钟完全不动</b>才算真卡住：点「停止」，再说「接着处理」。</li>
+    <li>如果提示「<b>内存不够、模型被挤到硬盘</b>」，关掉别的程序和浏览器标签页再试，或把材料拆小。</li>
+    <li>这个包只带<b>通义千问 4B</b>，8G 内存刚好跑得动。别去装 8B——8G 内存装不下，会慢 8 倍。</li>
+  </ul>
+  <h4>让它照你的规矩来</h4>
+  <ul>
+    <li>点右上角「<b>资料/记忆</b>」，把制度、模板、口径存进去，回答时自动参考；单位名、落款习惯放进「记忆」。</li>
+    <li>不会措辞就照「<b>提示词模板</b>」抄：20 个文种 + 6 类表格，方括号里换成你的字。</li>
+  </ul>
+  <h4>要留意的</h4>
+  <ul>
+    <li>它会<b>一本正经地编数字和条款号</b>，凡涉及「第几条」「占比多少」必须自己对原件核一遍。</li>
+    <li>扫描件、图片型 PDF 读不出来；它不能看图、不能生成图片。</li>
+    <li>政策提法有保质期，机器可能用旧的，必须人核。</li>
+  </ul>
+  <div class="acts">
+    <button id="helpFull">图文说明</button>
+    <button class="ghost" id="helpVideo">看视频</button>
+    <button class="ghost" id="helpTpl">提示词模板</button>
+    <button class="ghost" id="helpClose">关闭</button>
+  </div>
+  <div class="cc">当前版本 <b id="verTxt">—</b> · 以后更新只换 app 文件夹，不用重下整包<br>本工具由 汤姆汤汤汤 制作 · 微信 zx6530022 · © 2026 保留所有权利</div>
+</div></div>
+<div id="drop">松开，把文件放进来</div>
+<div id="mask"><div class="maskbox">
+  <h3>引擎还没连上</h3>
+  <p>这个页面要靠同目录下的「启动」脚本把模型跑起来，页面本身只是一个壳。</p>
+  <p>请关掉浏览器，回到文件夹，双击 <code>启动-Windows.bat</code>（或对应系统的启动文件），等它自动打开页面。</p>
+  <p style="color:#787E88;font-size:12.5px">如果已经双击了，可能是模型还在加载，第一次要 10–40 秒。</p>
+  <button class="btn" id="btnRetry">我再试一次</button>
+</div></div>
+
+
+<div id="drawer">
+  <div class="dr-head" style="position:relative">
+    <div class="t">资料 · 记忆 · 技能</div>
+    <button class="x" id="drClose">×</button>
+    <div class="tabs">
+      <button class="tab on" data-t="doc">资料 <span id="docCount">0</span></button>
+      <button class="tab" data-t="mem">记忆 <span id="memCount">0</span></button>
+      <button class="tab" data-t="skill">技能 <span id="skCount">0</span></button>
+    </div>
+  </div>
+
+  <div class="dr-body" id="paneDoc">
+    <div class="tipline">放进去的资料会切成小段存在本机，提问时自动找出相关段落给模型参考。<b>这是「喂资料」的唯一方式</b>——它不会真的改模型，也不会把资料发到任何地方。</div>
+    <div class="dr-add">
+      <textarea id="docText" placeholder="把制度、口径、领导讲话、常写的模板粘进来，点保存"></textarea>
+      <div class="r">
+        <button class="btn" id="docPick">选文件</button>
+        <button class="btn" id="docSave">存为资料</button>
+      </div>
+    </div>
+    <div id="docList"></div>
+  </div>
+
+  <div class="dr-body" id="paneMem" style="display:none">
+    <div class="tipline">这里放<b>长期有效的事实</b>：你的单位、常用称谓、固定落款、写作习惯。每次对话都会自动带上。</div>
+    <div class="dr-add">
+      <textarea id="memText" placeholder="例如：我在××市××局办公室，正式文件落款写「××市××局」，日期用阿拉伯数字"></textarea>
+      <div class="r"><button class="btn" id="memSave">记住这条</button></div>
+    </div>
+    <div id="memList"></div>
+  </div>
+
+  <div class="dr-body" id="paneSkill" style="display:none">
+    <div class="tipline">技能就是一段固定的指令，决定模型<b>按什么结构干活</b>。内置公文、图表、演示、办公四类；也可以把 GitHub 上的 SKILL.md 直接导进来。</div>
+    <div class="dr-add">
+      <div class="form-row">
+        <input id="skName" placeholder="技能名称，如「通知起草」">
+        <select id="skGroup">
+          <option>我的</option><option>公文</option><option>图表</option><option>演示</option><option>办公</option><option>常用</option>
+        </select>
+      </div>
+      <input id="skDesc" placeholder="一句话说明（显示在技能名下面）" style="width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-family:inherit;font-size:12.5px;margin-bottom:8px;background:#fff;color:var(--ink)">
+      <textarea id="skSys" placeholder="提示词：告诉它按什么结构写、哪些内容不许编"></textarea>
+      <div class="r">
+        <button class="btn" id="skCancel" style="display:none">取消</button>
+        <button class="btn" id="skSave">保存为新技能</button>
+      </div>
+    </div>
+    <div id="skList"></div>
+  </div>
+
+  <div class="dr-foot" id="footKB">
+    <button class="btn" id="btnExportKB">导出资料包</button>
+    <button class="btn" id="btnImportKB">导入资料包</button>
+    <input type="file" id="kbFile" accept=".json" hidden>
+  </div>
+  <div class="dr-foot" id="footSK" style="display:none">
+    <button class="btn" id="btnImportSK">导入技能</button>
+    <button class="btn" id="btnExportSK">导出我的技能</button>
+    <button class="btn" id="btnResetSK">清空自制</button>
+    <input type="file" id="skFile" multiple accept=".json,.md,.markdown,.txt" hidden>
+  </div>
+</div>
+
+<script src="word.js?v=1500"></script>
+<script src="pdf.js?v=1500"></script>
+<script src="oldoffice.js?v=1500"></script>
+<script src="formats.js?v=1500"></script>
+<script src="store.js?v=1500"></script>
+<script src="skills.js?v=1500"></script>
+<script src="gongwen.js?v=1500"></script>
+<script src="office.js?v=1500"></script>
+<script>
+/* ============ 配置 ============ */
+const API = location.protocol === 'file:' ? 'http://127.0.0.1:8080' : location.origin;
+const APP_VER = 'v1.5.0';     // 版本号：更新只换 app 文件夹，不用重下整包
+let CTX_NOW = 4096;            // 实际上下文窗口：优先用启动脚本算好的，其次 /props；读不到就按保守的 4096
+const MAX_ATTACH = 20000;     // 附件总字数上限；更长的材料会按 CHUNK 自动分批处理
+const CHUNK = 2200;           // 长材料整理表格时，每批处理的字数
+const HIST_TURNS = 6;         // 保留最近几轮对话
+/* ---------- 耗时预估（v1.4.0）：让用户发大文件之前就知道要等多久 ---------- */
+const TOK_PER_CHAR = 0.6;         // 实测：中文材料平均约 0.6 token / 字
+let SPEED = {pre: 40, gen: 14};   // 读写速度（token/秒），连上引擎后按本机实测校准
+const SMART_LIMIT = 30000;        // 超过 3 万字不再全文精读（要等十几二十分钟），自动改智能抽读
+const SCAN_CHUNKS = 10;           // 智能抽读最多读多少段，保证时间有上限
+
+/* 秒数 → 「X 分 Y 秒」 */
+function fmtDur(sec){
+  sec = Math.round(sec);
+  if(sec < 60) return sec + ' 秒';
+  return Math.floor(sec / 60) + ' 分' + (sec % 60 ? (sec % 60) + ' 秒' : '');
+}
+/* 估算一份材料的总耗时：读入 + 生成 + 每批的固定开销 */
+function estFlowSec(chars, kind){
+  const chunkChars = kind === 'scan' ? Math.min(CHUNK, Math.ceil(chars / SCAN_CHUNKS))
+    : (kind === 'rewrite' ? 1400 : CHUNK);
+  const n = Math.max(1, Math.ceil(chars / chunkChars));
+  const inSec = chars * TOK_PER_CHAR / Math.max(SPEED.pre, 5);
+  /* 每段实际要生成的字数（实测：表格约 300 token，要点约 250） */
+  const perOut = kind === 'sheet' ? 320 : kind === 'rewrite' ? 900 : 260;
+  return inSec + n * perOut / Math.max(SPEED.gen, 3) + n * 2;
+}
+
+/* ============ 技能 ============ */
+/* 技能数据在 skills.js：内置公文/图表/演示/办公四类，自制与导入的存在本机 */
+const PH = {
+  free:'想到什么说什么…',
+  polish:'把要改的稿子粘在这里',
+  notice:'例如：写一份关于开展年度档案检查的通知，下周一各科室自查，月底前交总结',
+  short:'粘一段需要压缩的文字',
+  key:'粘一篇长文，我提要点',
+  table:'例如：把下面这份名单整理成表格，列出姓名、科室、职务',
+  check:'粘一段稿子，我说几句哪里读着别扭',
+  data:'粘一段含数字的材料，我抽成表格',
+  mail:'把要通知的事写清楚，我出两个版本',
+  'gw-expert':'写公文直接说：什么文种、给谁看、什么事。或把稿子粘进来核稿',
+  'gw-notice':'例如：写一份开展年度档案检查的通知，时间、范围、报送要求我来定',
+  'gw-request':'例如：申请采购 3 台档案柜，经费 1.2 万元，写个请示',
+  'gw-han':'例如：给市财政局发函，请他们提供去年专项资金拨付明细',
+  'gw-minutes':'把会议记录粘进来，我整理成纪要',
+  'gw-summary':'把今年的工作情况说一下，我整理成总结',
+  'gw-speech':'例如：局长在全局档案工作会上的讲话，8 分钟',
+  'gw-brief':'把这件事写成一条信息，300 字内',
+  'gw-style':'粘一段口语化的稿子，我改成公文语言',
+  'gw-check':'粘一篇公文，我按文种、结构、序号、结语逐项过一遍',
+  'tb-design':'例如：把各科室办件量整理成表，要有同比',
+  'chart-pick':'贴一组数据，我告诉你该画什么图',
+  'flow-map':'例如：文件从收文到归档的流程，含催办和退回',
+  'matrix-2x2':'例如：三个方案按成本和见效速度排个序',
+  'ppt-outline':'例如：给局务会汇报档案工作，10 页',
+  'ppt-page':'把这一页的内容粘进来，我重写成能讲的',
+  'ppt-script':'把 PPT 大纲贴进来，我写逐字稿',
+  mtg:'把会上记的零散内容粘进来',
+  week:'把这周干的几件事列一下，我整理成周报',
+  digest:'粘一篇长文，我压成三层'
+};
+/* 默认技能：公文专家。这台软件主要就是干这个的 */
+const DEFAULT_SKILL = 'gw-expert';
+let curSkillId = DEFAULT_SKILL;
+function curSkill(){
+  const s = (window.Skills && Skills.get(curSkillId)) || null;
+  return s || { id:'free', name:'自由对话', sys:'你是一个中文办公助手，回答简洁、准确，说人话，不堆套话。', out:null };
+}
+
+/* ============ 状态 ============ */
+let messages = [];
+let streaming = false;
+let controller = null;
+let attachments = [];
+let engineOK = false;
+let probeTries = 0;
+
+const $ = s => document.querySelector(s);
+const list = $('#list'), chat = $('#chat'), input = $('#input');
+
+/* ============ 任务：左边一栏就是一个个独立对话 ============ */
+/* 任务存在本机资料库（IndexedDB）里，和资料、记忆同一个库；对话之间互相看不见 */
+let curTask = null;
+
+function taskTime(ts){
+  const d = new Date(ts), now = new Date();
+  const p = n => n < 10 ? '0' + n : '' + n;
+  if(d.toDateString() === now.toDateString()) return p(d.getHours()) + ':' + p(d.getMinutes());
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+async function refreshTasks(){
+  if(!window.Store) return;
+  const list = await Store.listTasks();
+  list.sort((a,b)=> b.updatedAt - a.updatedAt);
+  const box = $('#taskList');
+  if(!box) return;
+  box.innerHTML = '';
+  list.forEach(t=>{
+    const el = document.createElement('div');
+    el.className = 'task' + (curTask && curTask.id === t.id ? ' on' : '');
+    el.innerHTML = `<div class="tt">${esc(t.title || '新任务')}</div>
+      <div class="tm">${taskTime(t.updatedAt)} · ${Math.floor((t.msgs || []).length / 2)} 轮对话</div>
+      <button class="tdel" title="删除这个任务">×</button>`;
+    el.onclick = ()=> switchTask(t.id);
+    el.querySelector('.tdel').onclick = e=>{ e.stopPropagation(); removeTask(t.id); };
+    box.appendChild(el);
+  });
+  if(!list.length){
+    box.innerHTML = '<div class="tempty">还没有任务<br>点上面的「＋ 新建任务」开一个<br>（发出第一句话后自动保存）</div>';
+  }
+}
+
+async function saveCur(){
+  if(!curTask || !window.Store) return;
+  curTask.msgs = messages;
+  curTask.skillId = curSkillId;
+  if(curTask.msgs.length && (curTask.title === '新任务' || !curTask.title)){
+    const first = String(curTask.msgs[0].shown || curTask.msgs[0].content || '').replace(/\s+/g,' ').trim();
+    if(first) curTask.title = first.slice(0, 18) || '新任务';
+  }
+  await Store.saveTask(curTask);
+  refreshTasks();
+}
+
+async function switchTask(id){
+  if(streaming) return toast('正在回复，等它说完再换任务');
+  if(curTask && curTask.id === id) return;
+  await saveCur();
+  const t = await Store.getTask(id);
+  if(!t) return;
+  curTask = t;
+  messages = t.msgs || [];
+  attachments = []; renderChips();   /* 换任务不带旧附件，防止串材料 */
+  curSkillId = t.skillId || 'free';
+  renderAll();
+  updateSkillBar();
+  refreshTasks();
+  input.focus();
+}
+
+async function newTask(){
+  if(streaming) return toast('正在回复，等它说完再开新的');
+  await saveCur();
+  curTask = null;                 /* 先不入库，发出第一句话时才保存 */
+  messages = [];
+  attachments = []; renderChips();   /* 新任务不带旧附件 */
+  curSkillId = DEFAULT_SKILL;
+  renderAll();
+  updateSkillBar();
+  refreshTasks();
+  input.focus();
+}
+
+async function removeTask(id){
+  const t = await Store.getTask(id);
+  if(!t) return;
+  const n = Math.floor((t.msgs || []).length / 2);
+  if(!confirm('删除「' + (t.title || '新任务') + '」' + (n ? '（' + n + ' 轮对话）' : '') + '？删了就找不回来了。')) return;
+  await Store.deleteTask(id);
+  if(curTask && curTask.id === id){ curTask = null; messages = []; renderAll(); updateSkillBar(); }
+  refreshTasks();
+}
+
+/* 切任务时把对话重画一遍 */
+function renderAll(){
+  list.innerHTML = '';
+  const w = $('#welcome');
+  if(w) w.style.display = messages.length ? 'none' : 'block';
+  messages.forEach(m=>{
+    const el = addMsg(m.role, m.shown || m.content);
+    if(m.role === 'assistant') wireTools(el, ()=> m.content);
+  });
+  scrollBottom();
+}
+
+async function initTasks(){
+  try{
+    const list = await Store.listTasks();
+    list.sort((a,b)=> b.updatedAt - a.updatedAt);
+    if(list.length){
+      curTask = list[0];
+      messages = curTask.msgs || [];
+      curSkillId = curTask.skillId || 'free';
+    }
+  }catch(e){ console.warn('任务读不出来', e); }
+  renderAll();
+  updateSkillBar();
+  refreshTasks();
+}
+
+/* ============ 技能：搬到了输入框上方，点一下弹出来换 ============ */
+function updateSkillBar(){
+  const s = curSkill();
+  const n = $('#skillName'), d = $('#skillDesc');
+  if(n) n.textContent = s.name;
+  if(d) d.textContent = s.desc || '';
+  $('#hTitle').textContent = s.name;
+  input.placeholder = PH[curSkillId] || '粘贴文稿，或直接说要求…';
+}
+
+function renderSkillPick(){
+  const box = $('#pickList');
+  if(!box || !window.Skills) return;
+  box.innerHTML = '';
+  const map = Skills.byGroup();
+  ['常用','公文','图表','演示','办公','我的'].forEach(g=>{
+    const arr = map[g] || [];
+    if(!arr.length) return;
+    const lab = document.createElement('div');
+    lab.className = 'pk-group';
+    lab.textContent = g;
+    const grid = document.createElement('div');
+    grid.className = 'pk-grid';
+    arr.forEach(sk=>{
+      const b = document.createElement('button');
+      b.className = 'pk-item' + (sk.id === curSkillId ? ' on' : '') + (sk.enabled === false ? ' off' : '');
+      b.title = (sk.src ? '来源：' + sk.src : '');
+      b.innerHTML = `<b>${esc(sk.name)}${sk.id === curSkillId ? ' ✓' : ''}</b><span>${esc(sk.desc || '')}</span>`;
+      b.onclick = ()=>{
+        if(sk.enabled === false) return toast('这个技能被停用了，到「技能库」里开启');
+        pickSkill(sk.id);
+        $('#skillPick').classList.remove('on');
+      };
+      grid.appendChild(b);
+    });
+    box.appendChild(lab);
+    box.appendChild(grid);
+  });
+}
+
+function pickSkill(id){
+  curSkillId = id;
+  updateSkillBar();
+  if(curTask){
+    curTask.skillId = id;
+    if(window.Store) Store.saveTask(curTask).then(()=>refreshTasks());
+  }
+  $('#skillPick').classList.remove('on');
+  input.focus();
+}
+
+function refreshSkillUI(){ renderSkillPick(); updateSkillBar(); }
+
+$('#btnNewTask').onclick = newTask;
+$('#skillBar').onclick = ()=>{ renderSkillPick(); $('#skillPick').classList.add('on'); };
+$('#pickClose').onclick = ()=> $('#skillPick').classList.remove('on');
+$('#skillPick').onclick = e=>{ if(e.target.id === 'skillPick') $('#skillPick').classList.remove('on'); };
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') $('#skillPick').classList.remove('on');
+});
+
+/* 欢迎页四张卡：点了直接换技能 */
+document.querySelectorAll('.card').forEach(c=>{
+  c.onclick = ()=> pickSkill(c.dataset.s);
+});
+
+/* ============ 引擎探测 ============ */
+let MODEL_IDS = [];
+let curModelId = ''; try{ curModelId = localStorage.getItem('lad_model') || ''; }catch(e){}
+let lastSentModel = '';
+let thinkTxt = '';
+const KNOWN_NAMES = [
+  [/^Qwen3-4B-Instruct-2507/i, '通义千问 4B'],
+  [/R1-0528-Qwen3-8B/i, 'DeepSeek-R1 8B'],
+  [/R1-Distill-Qwen-1\.5B/i, 'DeepSeek-R1 1.5B'],
+  [/R1-Distill-Qwen-14B/i, 'DeepSeek-R1 14B'],
+];
+function thinkModel(){ return /r1|deepseek/i.test(curModelId); }
+/* 模型按电脑性能自动锁定：小电脑只用小模型，好电脑自动用能跑的最大模型，
+   不给用户切换（切错了会卡死或慢十倍，这不是用户该操心的事） */
+function paramB(id){
+  const m = String(id).match(/(\d+(?:\.\d+)?)\s*[bB](?![a-zA-Z])/);
+  return m ? parseFloat(m[1]) : 0;
+}
+let TUNED_MODEL = null;   // 启动脚本按内存算好的那个模型
+let TUNED_CTX = 0;        // 启动脚本实际传给引擎的上下文长度（路由模式下 /props 读不到，只能靠它）
+function applyAutoModel(){
+  if(!MODEL_IDS.length) return;
+  if(MODEL_IDS.length === 1){ curModelId = MODEL_IDS[0]; renderModelSel(); return; }
+  let pick = TUNED_MODEL;
+  if(!pick){
+    /* 没有启动脚本的推荐值（老包、直接开页面）时保守选：
+       选大了内存不够会直接卡死，选小了只是慢一点，宁慢不卡。
+       真正的「大内存用大模型」由启动脚本写进 tuning.json 决定。 */
+    const sorted = MODEL_IDS.slice().sort((a,b)=>paramB(a)-paramB(b));
+    const mem = Number(navigator.deviceMemory || 0);
+    pick = (mem && mem <= 4) ? sorted[0] : sorted[Math.min(1, sorted.length - 1)];
+  }
+  curModelId = pick;
+  renderModelSel();
+}
+/* 实测太慢（< 6 tok/s）就自动降一档：8B→4B→1.5B。
+   慢成这样的原因几乎只有一个——内存不够，模型被挤到硬盘上换页。 */
+function autoDownshift(){
+  try{
+    if(!(SPEED.gen > 0 && SPEED.gen < 6) || MODEL_IDS.length < 2) return false;
+    const curB = paramB(curModelId || '');
+    if(curB < 6) return false;
+    const smaller = MODEL_IDS.filter(m => paramB(m) > 0 && paramB(m) < curB)
+      .sort((a,b)=>paramB(b)-paramB(a))[0];
+    if(!smaller) return false;
+    const nb = paramB(smaller);
+    curModelId = smaller;
+    renderModelSel();
+    toast(`这台电脑跑 ${curB}B 太吃力（实测约 ${Math.max(1, Math.round(SPEED.gen*1.5))} 字/秒），已自动换成 ${nb}B，快三倍以上。下一条消息首次会多等半分钟加载新模型。`, 9000);
+    return true;
+  }catch(e){ return false; }
+}
+function modelLabel(id){
+  const short = String(id || '').split(/[\\/]/).pop().replace(/\.gguf$/i,'');
+  for(const [re,n] of KNOWN_NAMES){ if(re.test(short)) return n; }
+  return short;
+}
+function renderModelSel(){
+  const sel = $('#modelSel'), nameEl = $('#modelName');
+  sel.hidden = true;                 /* 不给切换：已按电脑自动选好 */
+  nameEl.style.display = '';
+  if(!MODEL_IDS.length) return;
+  nameEl.textContent = modelLabel(curModelId || MODEL_IDS[0]);
+  nameEl.title = '已按您电脑的性能自动选好，不用设置';
+}
+async function probe(){
+  try{
+    const r = await fetch(API + '/v1/models', {cache:'no-store'});
+    if(!r.ok) throw 0;
+    const j = await r.json();
+    MODEL_IDS = (j?.data||[]).map(x=>x.id).filter(Boolean);
+    if(!MODEL_IDS.length) MODEL_IDS = ['本地模型'];
+    if(MODEL_IDS.length === 1) curModelId = MODEL_IDS[0];
+    /* 启动脚本按电脑内存写了一份「自动适配」建议：8G 小内存电脑自动选小模型，
+       用户什么都不用设置，页面打开就是最适合的模型 */
+    try{
+      const tr = await fetch(API + '/tuning.json', {cache:'no-store'});
+      if(tr.ok){
+        const tj = await tr.json();
+        const want = String(tj.model || '').split(/[\\/]/).pop().replace(/\.gguf$/i,'');
+        if(want && MODEL_IDS.length > 1){
+          const hit = MODEL_IDS.find(m => m.split(/[\\/]/).pop().replace(/\.gguf$/i,'') === want);
+          if(hit) TUNED_MODEL = hit;
+        const tc = Number(tj.ctx || 0);
+        if(Number.isFinite(tc) && tc >= 1024) TUNED_CTX = tc;
+        }
+      }
+    }catch(e){}   /* 没有 tuning.json（老包）就按上下文档位兜底 */
+    $('#dot').className = 'dot ok';
+    $('#stateText').textContent = '引擎已连接';
+    engineOK = true;
+    $('#mask').classList.remove('on');
+    /* 读一次真实上下文窗口，分片大小按它算，比写死可靠 */
+    try{
+      const pr = await fetch(API + '/props', {cache:'no-store'});
+      if(pr.ok){
+        const pj = await pr.json();
+        /* 不同版本引擎字段位置不一样，全都兼容一遍，读不到再用默认 */
+        const n = pj?.default_generation_settings?.params?.n_ctx
+          || pj?.default_generation_settings?.n_ctx
+          || pj?.n_ctx || 0;
+        if(Number.isFinite(n) && n >= 2048) CTX_NOW = n;
+      }
+    }catch(e){}
+    applyAutoModel();   /* 上下文/内存确认后再定模型，一次到位 */
+    /* 路由模式下 /props 的 n_ctx 恒为 0，读不到真实值。启动脚本知道自己传了
+       多少上下文，就用它；没有就保持上面的保守值，绝不再按 16K 乱算分片。 */
+    if(TUNED_CTX) CTX_NOW = TUNED_CTX;
+    /* 实测本机读写速度：之后所有「预计还要多久」都按真实速度算，不用猜。
+       第一次请求可能把模型加载时间也算进去，所以测两遍，用第二遍（热了以后）的。 */
+    try{
+      const mk = s2 => ({messages:[{role:'user', content:s2}], max_tokens:16, temperature:0,
+        cache_prompt:true, chat_template_kwargs:{enable_thinking:false}});
+      const calib = '请把下面这段话抄一遍最后一行：\n' + '办公室本周完成年度工作总结报告，投入人力十人次，经费三万元，完成进度八成。\n'.repeat(16);
+      const runCalib = async () => {
+        const t1 = Date.now();
+        const r1 = await fetch(API + '/v1/chat/completions', {method:'POST',
+          headers:{'Content-Type':'application/json'}, body: JSON.stringify(mk('回答：1+1等于几？只答数字。'))});
+        if(r1.ok){
+          const j1 = await r1.json();
+          const gt = j1.usage?.completion_tokens || 16;
+          SPEED.gen = gt / Math.max((Date.now() - t1) / 1000, 0.1);
+        }
+        const t2 = Date.now();
+        const r2 = await fetch(API + '/v1/chat/completions', {method:'POST',
+          headers:{'Content-Type':'application/json'}, body: JSON.stringify(mk(calib))});
+        if(r2.ok){
+          const j2 = await r2.json();
+          const pt = j2.usage?.prompt_tokens || 0;
+          const wall = Math.max((Date.now() - t2) / 1000, 0.1);
+          const genT = (j2.usage?.completion_tokens || 16) / Math.max(SPEED.gen, 1);
+          if(pt >= 300 && wall - genT > 0.1) SPEED.pre = pt / (wall - genT);
+        }
+      };
+      await runCalib();
+      await runCalib();   /* 第二遍是热缓存 + 模型已加载，读数才准 */
+    }catch(e){}   /* 测速失败就用保守估计，不影响使用 */
+    autoDownshift();   /* 实测跑不动大模型就自动换小的 */
+  }catch(e){
+    engineOK = false;
+    probeTries++;
+    if(probeTries < 3){
+      $('#dot').className = 'dot wait';
+      $('#stateText').textContent = '正在连引擎…';
+    }else{
+      $('#dot').className = 'dot bad';
+      $('#stateText').textContent = '未连接';
+      if(probeTries === 6) $('#mask').classList.add('on');
+    }
+    setTimeout(probe, 2000);
+  }
+}
+$('#btnRetry').onclick = ()=>{ $('#mask').classList.remove('on'); probeTries = 0; probe(); };
+probe();
+
+/* ============ 自检：格式解析器是否加载成功 ============ */
+if(!window.Formats){
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#A87C26;color:#fff;'
+    + 'padding:9px 16px;font-size:13px;text-align:center;line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+  bar.innerHTML = '文件解析组件没加载上。先按 <b>Ctrl + F5</b> 强制刷新；'
+    + '刷新后还提示，就是 app 文件夹里缺 formats.js —— 把包①重新解压覆盖一遍。'
+    + '<b style="text-decoration:underline;cursor:pointer" onclick="location.reload()">点这里刷新</b>';
+  document.body.appendChild(bar);
+}
+
+/* ============ 输入框 ============ */
+input.addEventListener('input', ()=>{
+  input.style.height='auto';
+  input.style.height = Math.min(input.scrollHeight,190)+'px';
+  $('#count').textContent = input.value.length ? input.value.length + ' 字' : '';
+});
+input.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); send(); }
+});
+
+/* ============ 附件 ============ */
+$('#btnFile').onclick = ()=> $('#file').click();
+$('#file').onchange = e =>{ const fs=[...e.target.files]; e.target.value=''; handleFiles(fs); };
+async function handleFiles(files){
+  const big = [...files].some(f => f.size > 5 * 1024 * 1024);
+  if(big) toast('正在读取文件，大文件要十几秒，请稍等…', 4000);
+  for(const f of [...files]){
+    try{
+      const r = await extractText(f);
+      if(!r.text || !r.text.trim()){ alert(`「${f.name}」里没有读到文字。\n扫描件、图片型 PDF 读不出来，需要先 OCR 或另存为文字版。`); continue; }
+      attachments.push({name:f.name, text:r.text, kind:r.kind, meta:r.meta});
+      renderChips();
+      /* 让界面喘口气，别在解析大文件时看起来像卡死 */
+      await new Promise(r => setTimeout(r, 30));
+    }catch(err){
+      alert(`「${f.name}」没读出来：\n${err.message}`);
+    }
+  }
+  /* 读完立刻说清楚「一共多少字、大概要等多久」，别让用户发出去才傻等 */
+  const total = attachments.reduce((s, a) => s + a.text.length, 0);
+  if(total > 3000){
+    const scan = total > SMART_LIMIT;
+    toast(`已读入 ${attachments.length} 个文件，共 ${total} 字`
+      + `，处理约需 ${fmtDur(estFlowSec(scan ? Math.min(total, SCAN_CHUNKS * CHUNK) : total, scan ? 'scan' : 'points'))}`
+      + (scan ? '（材料很大，会自动抽读全文，结果里会注明）' : '') + '。发送后进度会实时显示。', 5000);
+  }
+}
+async function extractText(file){
+  const u = new Uint8Array(await file.arrayBuffer());
+  if(!u.length) throw new Error('文件是空的');
+  const F = window.Formats;
+  if(F && typeof F.extract === 'function') return await F.extract(file.name, u);
+  /* 解析器没加载上（多半是浏览器缓存了旧脚本）。纯文本格式仍然能读，别让小毛病卡住正事。 */
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const plain = ['txt','md','markdown','csv','tsv','json','xml','log','srt','ini','yaml','yml','sql'];
+  if(plain.indexOf(ext) >= 0){
+    const t = decodeText(u);
+    if(/[\u0000-\u0008]/.test(t.slice(0, 4000))) throw new Error('这个文件读不出文字，多半是图片或扫描件');
+    return { text: t, kind: ext.toUpperCase() };
+  }
+  throw new Error('文件解析组件没加载上。按 Ctrl+F5 强制刷新后重试；还不行就把包①重新解压覆盖一遍（缺 formats.js）');
+}
+function decodeText(u){
+  for(const enc of ['utf-8','gbk']){
+    try{
+      const s = new TextDecoder(enc,{fatal:enc==='gbk'?false:true}).decode(u);
+      if(s.indexOf('\ufffd')<0) return s;
+    }catch(e){}
+  }
+  return new TextDecoder('utf-8').decode(u);
+}
+async function docxText(buf){
+  const xml = await unzipFile(buf,'word/document.xml');
+  const txt = xml.replace(/<w:p[ >]/g,'\n<w:p ')
+                 .replace(/<w:tab\/>/g,'\t').replace(/<w:br\/>/g,'\n')
+                 .replace(/<[^>]+>/g,'')
+                 .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+                 .replace(/&apos;/g,"'").replace(/&amp;/g,'&')
+                 .replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  if(!txt) throw new Error('文档里没有正文');
+  return txt;
+}
+async function unzipFile(buf, want){
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let eocd = -1;
+  for(let i=buf.length-22;i>=0 && i>buf.length-70000;i--){
+    if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; }
+  }
+  if(eocd<0) throw new Error('不是有效的 Word 文件（压缩包结构损坏）');
+  const n = dv.getUint16(eocd+10,true);
+  let p = dv.getUint32(eocd+16,true);
+  for(let k=0;k<n;k++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const method = dv.getUint16(p+10,true);
+    const csize = dv.getUint32(p+20,true);
+    const nlen = dv.getUint16(p+28,true), elen = dv.getUint16(p+30,true), clen = dv.getUint16(p+32,true);
+    const lho = dv.getUint32(p+42,true);
+    const name = new TextDecoder().decode(buf.subarray(p+46,p+46+nlen));
+    if(name===want){
+      const lnlen = dv.getUint16(lho+26,true), lelen = dv.getUint16(lho+28,true);
+      const start = lho+30+lnlen+lelen;
+      const data = buf.subarray(start, start+csize);
+      if(method===0) return new TextDecoder().decode(data);
+      const ds = new DecompressionStream('deflate-raw');
+      const out = await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer();
+      return new TextDecoder().decode(out);
+    }
+    p += 46+nlen+elen+clen;
+  }
+  throw new Error('文件里没有找到正文部分');
+}
+function renderChips(){
+  const total = attachments.reduce((s2,a)=>s2+a.text.length,0);
+  const multi = attachments.length > 1
+    ? `已选 ${attachments.length} 份，会当成<strong>一份材料</strong>一起处理：表格合成一张表，分析合成一份结果。`
+    : '';
+  const warn = (total > MAX_ATTACH && attachments.length)
+    ? `<div class="chip-warn">${multi}共 ${total} 字，会自动分成多段<strong>全部处理完</strong>，不会丢内容。
+        <br><span style="opacity:.8">唯一例外：让 AI「照着材料起草一整篇文稿」时，单次只能参考前 2 万字，超出部分会提示。</span></div>`
+    : (multi ? `<div class="chip-warn" style="background:#EFF6EE;border-color:#CFE3CB;color:#3B5A34">${multi}</div>` : '');
+  $('#chips').innerHTML = warn + '<div class="chip-wrap">' + attachments.map((a,i)=>{
+    const k = a.text.length>=1000 ? (a.text.length/1000).toFixed(1)+'k字' : a.text.length+'字';
+    const tag = a.kind ? `<em>${esc(a.kind)}</em>` : '';
+    return `<span class="file-chip">${tag}<b>${esc(a.name)}</b> ${k}${a.meta?' · '+esc(a.meta):''} <i data-i="${i}">×</i></span>`;
+  }).join('') + '</div>' + (attachments.length
+    ? `<div class="chip-foot"><span class="chip-sum">共 ${attachments.length} 份 · ${total} 字</span>` +
+      `<button class="mini" id="chipSave" style="border:1px solid var(--line);border-radius:5px;padding:3px 9px;background:#fff">存进资料库</button></div>` : '');
+  $('#chips').querySelectorAll('i').forEach(el=>{
+    el.onclick = ()=>{ attachments.splice(+el.dataset.i,1); renderChips(); };
+  });
+  const cs = $('#chipSave');
+  if(cs) cs.onclick = async ()=>{
+    try{
+      for(const a of attachments) await Store.addDoc(a.name, a.text);
+      toast(`已存 ${attachments.length} 份，以后提问会自动用上`);
+    }catch(e){ toast('存储失败（浏览器空间满了），可先删几份旧资料再试'); return; }
+    attachments=[]; renderChips(); refreshKB();
+  };
+}
+['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{
+  e.preventDefault(); $('#drop').classList.add('on');
+}));
+['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{
+  e.preventDefault();
+  if(t==='drop' && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  $('#drop').classList.remove('on');
+}));
+
+/* ============ 渲染 ============ */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function md(src){
+  let s = esc(src);
+  const blocks = [];
+  s = s.replace(/```([\s\S]*?)```/g, (m,c)=>{ blocks.push(c); return `\u0000${blocks.length-1}\u0000`; });
+  s = s.replace(/(^\|.*\|$)(\n\|[ :\-|]+\|$)?((\n\|.*\|$)*)/gm, (m)=>{
+    const rows = m.trim().split('\n').filter(r=>r.trim().startsWith('|'));
+    if(rows.length<2) return m;
+    const cells = r => r.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+    let html = '<table>', start = 0;
+    if(/^[\s:|-]+$/.test(rows[1].replace(/\|/g,''))){
+      html += '<thead><tr>' + cells(rows[0]).map(c=>`<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+      start = 2;
+    } else html += '<tbody>';
+    for(let i=start;i<rows.length;i++){
+      html += '<tr>' + cells(rows[i]).map(c=>`<td>${c}</td>`).join('') + '</tr>';
+    }
+    return html + '</tbody></table>';
+  });
+  s = s.replace(/^### (.+)$/gm,'<h3>$1</h3>')
+       .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+       .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+       .replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
+       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+       .replace(/`([^`]+)`/g,'<code>$1</code>');
+  s = s.replace(/(?:^[ \t]*[-*] .*(?:\n|$))+/gm, m=>
+    '<ul>' + m.trim().split('\n').map(l=>`<li>${l.replace(/^[ \t]*[-*] /,'')}</li>`).join('') + '</ul>');
+  s = s.replace(/(?:^[ \t]*\d+\. .*(?:\n|$))+/gm, m=>
+    '<ol>' + m.trim().split('\n').map(l=>`<li>${l.replace(/^[ \t]*\d+\. /,'')}</li>`).join('') + '</ol>');
+  s = s.split(/\n{2,}/).map(p=>{
+    p = p.trim();
+    if(!p) return '';
+    if(/^<(h\d|ul|ol|table|blockquote|pre)/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g,'<br>') + '</p>';
+  }).join('');
+  s = s.replace(/\u0000(\d+)\u0000/g, (m,i)=>`<pre><code>${blocks[+i]}</code></pre>`);
+  return s;
+}
+
+function addMsg(role, content){
+  const el = document.createElement('div');
+  el.className = 'msg ' + (role==='user'?'me':'ai');
+  el.innerHTML = `<div class="who">${role==='user'?'你':'AI'}</div>
+    <div class="bubble"><div class="body"></div><div class="tools"></div></div>`;
+  el.querySelector('.body').innerHTML = md(content);
+  if(role==='assistant'){
+    el.querySelector('.tools').innerHTML = `
+      <button class="mini" data-a="copy">复制</button>
+      <button class="mini" data-a="gwcheck">公文核稿</button>
+      <button class="mini" data-a="csv">表格转 CSV</button>
+      <button class="mini" data-a="docx">导出 Word</button>
+      <button class="mini" data-a="docxgw">导出公文</button>
+      <button class="mini" data-a="xlsx">导出 Excel</button>
+      <button class="mini" data-a="pptx">导出 PPT</button>
+      <button class="mini" data-a="redo">换个说法</button>`;
+  }
+  list.appendChild(el);
+  const w = $('#welcome'); if(w) w.style.display='none';
+  return el;
+}
+function wireTools(el, getText){
+  const t = el.querySelector('.tools');
+  if(!t) return;
+  const c = a => t.querySelector(`[data-a=${a}]`);
+  if(c('copy')) c('copy').onclick = ()=> copy(getText());
+  if(c('csv'))  c('csv').onclick  = ()=> copy(csvFrom(getText()));
+  if(c('docx')) c('docx').onclick = ()=> saveAs('docx', getText());
+  if(c('docxgw')) c('docxgw').onclick = ()=> saveAs('docxgw', getText());
+  if(c('xlsx')) c('xlsx').onclick = ()=> saveAs('xlsx', getText());
+  if(c('pptx')) c('pptx').onclick = ()=> saveAs('pptx', getText());
+  if(c('redo')) c('redo').onclick = ()=> regenerate();
+  if(c('gwcheck')) c('gwcheck').onclick = ()=> showGwCheck(el, getText());
+  t.style.opacity = 1;
+}
+
+/* ================= 公文核稿（v1.5.0）=================
+   纯规则判断，不调模型、不联网，毫秒出结果。
+   查的是「格式和结构」这类有确定答案的东西；政策提法、数字口径不查，
+   因为那些没有标准答案，机器判不了，只能人来核。 */
+function showGwCheck(el, txt){
+  if(!window.GW) return toast('公文模块没加载，请用最新版补丁');
+  const t = String(txt || '').trim();
+  if(t.length < 20) return toast('内容太短，没什么可核的');
+
+  if(el._gwPanel){ el._gwPanel.remove(); el._gwPanel = null; return; }
+
+  /* 先判文种：优先按内容判，判不出用技能设定的 */
+  let gid = GW.detect(t);
+  let fromSkill = false;
+  if(!gid){
+    const sg = curSkill().genre;
+    if(sg && sg !== 'auto'){ gid = sg; fromSkill = true; }
+  }
+  const list = GW.check(t, gid);
+  const errs = list.filter(x => x.lv === 'err');
+  const warns = list.filter(x => x.lv === 'warn');
+  const gname = gid && GW.get(gid) ? GW.get(gid).name : '未判定';
+
+  let html = `<div style="font-size:12.5px;margin-bottom:8px;color:#6B675F">
+    按<b>${esc(gname)}</b>的口径核了一遍${fromSkill ? '（文种取自当前技能）' : gid ? '（按内容判定）' : ''} ·
+    查出 <b style="color:#B4553F">${errs.length}</b> 处硬伤、<b>${warns.length}</b> 处提醒
+  </div>`;
+
+  if(!list.length){
+    html += `<div style="font-size:13px;padding:10px 12px;background:#F3F6F1;border-left:3px solid #6E8B62;border-radius:4px">
+      格式和结构没查出硬伤。政策提法、数字口径、涉密内容仍要按本单位口径核一遍。</div>`;
+  }else{
+    list.forEach((x, i) => {
+      const c = x.lv === 'err' ? '#B4553F' : '#9A7B36';
+      const bg = x.lv === 'err' ? '#FBF1EE' : '#FBF8EE';
+      const tag = x.lv === 'err' ? '必须改' : '建议改';
+      html += `<div style="margin:6px 0;padding:9px 12px;background:${bg};border-left:3px solid ${c};border-radius:4px">
+        <div style="font-size:12px;color:${c};font-weight:600;margin-bottom:3px">${i+1}. ${tag} · ${esc(x.at)}</div>
+        <div style="font-size:13px;line-height:1.65">${esc(x.msg)}</div>
+        <div style="font-size:12.5px;line-height:1.65;color:#4A463F;margin-top:4px">→ ${esc(x.fix)}</div>
+      </div>`;
+    });
+    html += `<div style="font-size:11.5px;color:#8C877D;margin-top:8px;line-height:1.6">
+      这是格式与结构的确定性检查（不调模型、不烧 token）。改完可以再点一次复核。</div>`;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.innerHTML = `<div class="who">核稿</div><div class="bubble"><div class="body"></div></div>`;
+  wrap.querySelector('.body').innerHTML = html;
+  el.after(wrap);
+  el._gwPanel = wrap;
+}
+function csvFrom(txt){
+  const rows = txt.split('\n').filter(l=>l.trim().startsWith('|'));
+  if(!rows.length) return txt;
+  const cells = l => l.replace(/^\||\|$/g,'').split('|').map(c=>c.trim().replace(/^"|"$/g,''));
+  const keep = rows.filter(l=>!/^[\s:|-]+$/.test(l.replace(/\|/g,'')));
+  return keep.map(r=>cells(r).map(c=>/[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c).join(',')).join('\n');
+}
+async function copy(t){
+  try{ await navigator.clipboard.writeText(t); toast('已复制'); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); toast('已复制');
+  }
+}
+/* 从正文里取个像样的文件名：第一个标题或首行前 18 字 */
+function docName(t){
+  const lines = String(t).split('\n').map(x=>x.trim()).filter(Boolean);
+  let first = lines[0] || '文稿';
+  first = first.replace(/^#+\s*/, '').replace(/^第\s*\d+\s*页\s*[｜|]\s*/, '').replace(/^封面\s*[：:]\s*/, '');
+  first = first.split(/[，。；：！？、,;:!?（）()「」《》]/)[0];
+  first = first.replace(/[\\/:*?"<>|\n]/g, '').slice(0, 18).trim();
+  return (first || '文稿') + '_' + Office.stamp();
+}
+function saveAs(kind, t){
+  try{
+    if(kind === 'docx' || kind === 'docxgw'){
+      /* 公文技能下导出 Word 也自动套国标版式；
+         「导出公文」按钮则不管当前是什么技能，一律按公文版式出 */
+      const gw = kind === 'docxgw' || !!curSkill().genre;
+      Office.saveDocx(t, docName(t), null, gw);
+      toast(gw ? '已按 GB/T 9704 版式生成 Word（含页码），在下载文件夹' : '已生成 Word 文件，在下载文件夹');
+    }
+    else if(kind === 'xlsx'){
+      if(!Office.hasTable(t)) return toast('这段内容里没有表格，转不了 Excel');
+      Office.saveXlsx(t, docName(t)); toast('已生成 Excel 文件');
+    }
+    else if(kind === 'pptx'){
+      Office.savePptx(t, docName(t)); toast('已生成 PPT 文件');
+    }
+  }catch(err){ alert('生成失败：' + err.message); }
+}
+/* ============ 说一句「导出成 Excel」就直接给文件 ============ */
+const EXPORT_CMD = /(导出|导成|导一份|存成|存为|保存成|保存为|另存为|下载|输出成|输出为|生成一份|出个文件|给我一份文件)/;
+const EXPORT_NEG = /(不用|不要|别|无需|先不|暂时不)(导出|存成|保存|生成)/;
+
+/* 从用户这句话里判断要什么文件；没提就是 null */
+function detectExport(t){
+  const x = String(t || '');
+  if(EXPORT_NEG.test(x)) return null;
+  if(!EXPORT_CMD.test(x)) return null;
+  if(/excel|xlsx|execl|excle|电子表格|表格文件/i.test(x)) return 'xlsx';
+  if(/ppt|pptx|幻灯片|演示文稿|演示文件|幻灯/i.test(x)) return 'pptx';
+  if(/word|docx|文字文档|文档文件/i.test(x)) return 'docx';
+  if(/导出[^。；\n]{0,4}表/.test(x)) return 'xlsx';
+  if(/导出[^。；\n]{0,4}(文稿|文档)/.test(x)) return 'docx';
+  return null;
+}
+function exportHint(kind){
+  if(kind === 'xlsx') return '\n\n【用户要求把结果导出成 Excel 文件】\n回答只输出一个 Markdown 表格，别的什么都不要写：\n- 第一行是表头，用 | 分隔；第二行是 |---|---| 分隔线；\n- 每行一条记录，列数与表头一致；\n- 数字只写数字，单位写进表头（例如「金额（万元）」）；\n- 表格里的每个数字都必须来自用户原文，不许估算、累加、补百分比；\n- 不要写标题、前言、解释、结语，不要用代码块包起来。\n如果材料里确实没有可成表的内容，就输出两列表格「项目 | 说明」，把关键信息逐条列进去。';
+  if(kind === 'docx') return '\n\n【用户要求导出成 Word 文件】\n直接输出成文正文：\n第一行只写标题（不加 # 号，不加书名号）；第二行写主送机关，以「：」结尾；\n之后用「一、」「（一）」「1.」分层，每个小标题单独占一行，不要和后面的正文连在一行；\n不要写「以下是」这类话，不要用 Markdown 表格，不要加解释。\n日期、人名、数量、文号只能用用户给过的；没给就写「××××年××月××日」「××」。\n正文结束后另起两行写落款：第一行机关名称（用用户提到的单位，没提就写「××××」），第二行成文日期；不要再写别的。\n如果是通知、通报，正文末尾要单独一行写「特此通知。」';
+  return '\n\n【用户要求导出成 PPT 文件】\n严格按下面格式输出，不要任何解释：\n## 第1页｜结论式标题\n- 要点一\n- 要点二\n> 讲稿：这一页怎么讲，2–3 句口语。\n（每一页都这样，页与页之间空一行）\n页数按用户说的来，不多不少；所有数字只能用用户原文里出现过的，不许推算、加总、补百分比、补年份。';
+}
+
+/* 回复里本来没表格时，把「项目：内容」这类行拼成两列表 */
+function tableFromText(t){
+  const rows = [];
+  String(t).split('\n').map(x=>x.trim()).filter(Boolean).forEach(l=>{
+    const m = l.match(/^[·•*\-\s]*(?:\d+[.、]\s*)?([^：:]{1,22})[：:]\s*(.+)$/);
+    if(!m) return;
+    const k = m[1].replace(/^[（(]\d+[）)]\s*/,'').trim();
+    const v = m[2].trim();
+    if(!k || !v || /[。！？]$/.test(v)) return;
+    rows.push([k, v]);
+  });
+  if(rows.length < 2) return null;
+  return '| 项目 | 内容 |\n| --- | --- |\n' + rows.map(r=>`| ${r[0]} | ${r[1]} |`).join('\n');
+}
+
+/* 实在没有表格，就让模型专门整理一次（短、快） */
+async function askForTable(text){
+  try{
+    const r = await fetch(API + '/v1/chat/completions', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[
+          {role:'system', content:'你是数据整理助手。把用户给的内容整理成一张 Markdown 表格。只输出表格：第一行表头，第二行 |---| 分隔线，之后每行一条记录。不要解释，不要代码块。'},
+          {role:'user', content: String(text).slice(0, 3000)}
+        ],
+        stream:false, temperature:0.1, max_tokens:700,
+        chat_template_kwargs:{enable_thinking:false}
+      })
+    });
+    if(!r.ok) return null;
+    const j = await r.json();
+    const out = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+    const m = out.match(/(\|[^\n]*\|[\s\S]*)/);
+    const cand = m ? m[1].trim() : out.trim();
+    return Office.hasTable(cand) ? cand : null;
+  }catch(e){ return null; }
+}
+
+function expBar(el, info){
+  const bubble = el.querySelector('.bubble');
+  if(!bubble) return;
+  const d = document.createElement('div');
+  d.className = 'exp-bar' + (info.ok ? '' : ' warn');
+  if(info.ok){
+    d.innerHTML = `<span class="tick">已生成 ${info.label}</span>`
+      + `<span class="fn" title="${esc(info.file)}">${esc(info.file)}</span>`
+      + `<span class="sub">在浏览器「下载」文件夹里</span>`
+      + `<button data-a="again">再存一次</button>`;
+    d.querySelector('[data-a=again]').onclick = info.again;
+  }else{
+    d.innerHTML = `<span class="tick">没生成文件</span><span class="sub">${esc(info.msg)}</span>`;
+  }
+  const t = bubble.querySelector('.tools');
+  bubble.insertBefore(d, t);
+  scrollBottom();
+}
+
+/* 找到末尾「需要你补充：…」整段并删掉（取最后一次出现，避免误删正文） */
+function stripSupplement(t){
+  let i = -1, re = /^[ \t]*需要你补充[^\n]*$/gm, m;
+  while((m = re.exec(t))) i = m.index;
+  if(i > 0) return t.slice(0, i).replace(/[ \t\r\n]+$/, '');
+  return t;
+}
+async function autoExport(el, text, kind){
+  const label = kind === 'xlsx' ? 'Excel' : kind === 'docx' ? 'Word' : 'PPT';
+  let src = text;
+  if(kind === 'xlsx' && !Office.hasTable(src)){
+    const guess = tableFromText(src);
+    if(guess) src = guess;
+    else{
+      toast('这段不是表格，正在整理成表格…');
+      const t2 = await askForTable(src);
+      if(t2) src = t2;
+    }
+    if(!Office.hasTable(src)){
+      expBar(el, { ok: false, msg: '这段话里没整理出表格。可以再点下面的「导出 Excel」，或先说「把这些整理成表格」再导。' });
+      return;
+    }
+  }
+  const name = docName(text);
+  /* 公文稿尾的「需要你补充：…」是聊天里给用户看的清单，导出文件时去掉 */
+  if(kind === 'docx') src = stripSupplement(src);
+  const write = ()=>{
+    if(kind === 'xlsx') Office.saveXlsx(src, name);
+    else if(kind === 'docx') Office.saveDocx(src, name, null, !!curSkill().genre);
+    else Office.savePptx(src, name);
+  };
+  try{
+    write();
+    expBar(el, {
+      ok: true, label: label, file: name + '.' + kind,
+      again: ()=>{ write(); toast('已再存一份'); }
+    });
+  }catch(err){
+    expBar(el, { ok: false, msg: '生成失败：' + err.message });
+  }
+}
+
+function saveFile(t){
+  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'');
+  const blob = new Blob([t], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '文稿_' + stamp + '.txt';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  toast('已存到下载文件夹');
+}
+function toast(msg, ms){
+  const d=document.createElement('div');
+  d.textContent=msg;
+  d.style.cssText='position:fixed;left:50%;top:70px;transform:translateX(-50%);max-width:80vw;text-align:center;background:#17324D;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;line-height:1.5;z-index:99';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), ms || 1500);
+}
+
+/* ---------- 极速通道：结构化材料直接抽表（不跑模型，秒出） ---------- */
+/* 办公材料大多是「一条记录一段，带面积/人数/金额/状态」这种格式。
+   这种不需要模型逐字生成，直接按规则取字段，几毫秒出表，数字还是原文的，不会编。 */
+function quickTable(text){
+  const raw = String(text || '').replace(/\r/g, '').trim();
+  if(raw.length < 200) return null;
+
+  /* 多文件上传时，材料里是【文件名】+正文 拼起来的。先按标记切段，
+     把「来自哪个文件」记住——否则几个文件合并后分不清谁是谁。 */
+  const segs = [];
+  {
+    const re = /^【([^】]{1,80})】\s*$/gm;
+    let m, last = 0, src = '';
+    while((m = re.exec(raw))){
+      if(m.index > last) segs.push({src, body: raw.slice(last, m.index)});
+      src = m[1].replace(/\.(txt|docx?|pdf|xlsx?|xls|csv|md|html?)$/i, '');
+      last = re.lastIndex;
+    }
+    segs.push({src, body: raw.slice(last)});
+  }
+  const srcSet = [...new Set(segs.map(x=>x.src).filter(Boolean))];
+  const multiSrc = srcSet.length > 1;
+
+  let items = [];
+  for(const sg of segs){
+    const body0 = sg.body.trim();
+    if(!body0) continue;
+    let part = body0.split(/\n(?=\s*\d+\s*[.、．)）]\s*)/).map(s=>s.trim()).filter(Boolean);
+    if(part.length < 2) part = body0.split(/\n{2,}/).map(s=>s.trim()).filter(Boolean);
+    if(part.length < 2) part = body0.split(/\n/).map(s=>s.trim()).filter(s=>s.length > 12);
+    /* 段首那行如果是标题（没冒号、也没有计量单位，比如「办公室2024年度重点工作台账」），
+       丢掉，别当成一条记录；有数字但没单位的正文条目不受影响 */
+    const HAS_UNIT = /(\d+(?:[.,]\d+)?)\s*(亩|万元|亿元|万|人|家|个|平方米|平米|㎡|公里|千米|吨|台|套|%|％)/;
+    let guard = 0;
+    while(part.length > 1 && guard++ < 3 && !/[:：]/.test(part[0]) && !HAS_UNIT.test(part[0])) part.shift();
+    for(const it of part) items.push({text: it, src: sg.src});
+  }
+  if(items.length < 3 || items.length > 800) return null;
+
+  const UNIT = /(\d+(?:[.,]\d+)?)\s*(亩|万元|亿元|万|人|家|个|平方米|平米|㎡|公里|千米|吨|台|套|%|％)/g;
+  const STATE = /(建议中|建设中|已投产|已建成|在建|拟建|待定|已签约|已开工|前期|申报中|已立项)/;
+
+  const rows = [];
+  const colKeys = [];          // 单位 → 列名
+  let withNum = 0;
+
+  for(const item of items){
+    const body = String(item.text || '').replace(/^\s*\d+\s*[.、．)）]\s*/, '').trim();
+    if(!body) continue;
+
+    /* 名称：冒号前那一段（去掉编号）；没冒号就取前 24 字 */
+    const mColon = body.match(/^([^：:，,。；;]{2,40})[：:]/);
+    let name = (mColon ? mColon[1] : body.split(/[，,。；;]/)[0]).trim();
+    if(name.length > 40) name = name.slice(0, 40);
+
+    /* 数字字段：按单位归列，同一单位取第一个 */
+    const nums = {};
+    let hit = 0;
+    let mm;
+    UNIT.lastIndex = 0;
+    while((mm = UNIT.exec(body))){
+      const v = mm[1].replace(',', '');
+      let u = mm[2];
+      if(u === '％') u = '%';
+      if(u === '平米' || u === '㎡') u = '平方米';
+      if(u === '万') u = '万元';
+      if(!(u in nums)){ nums[u] = v; hit++; }
+      if(!colKeys.includes(u)) colKeys.push(u);
+    }
+    if(hit) withNum++;
+
+    const st = body.match(STATE);
+    rows.push({name, nums, state: st ? st[1] : '', src: item.src || ''});
+  }
+
+  /* 至少要像张表：条目够多、多数条目有数字、至少两种单位 */
+  if(rows.length < 3) return null;
+  if(withNum / rows.length < 0.6) return null;
+  if(colKeys.length < 2) return null;
+
+  const hasState = rows.some(r=>r.state);
+  const UNIT_LABEL = {亩:'面积（亩）', 平方米:'面积（平方米）', 万元:'金额（万元）', 亿元:'金额（亿元）',
+    人:'人数（人）', 家:'单位数（家）', 个:'数量（个）', 吨:'数量（吨）', 台:'数量（台）',
+    套:'数量（套）', 公里:'长度（公里）', 千米:'长度（千米）', '%':'占比（%）'};
+  /* 名称多半是「翠屏区金秋湖镇XX园」，能拆就拆成 地区/镇街/名称 三列 */
+  const NAME_RE = /^(.{1,7}?(?:区|县|市|旗))(.{1,7}?(?:镇|乡|街道|苏木))(.{1,40})$/;
+  const splittable = rows.filter(r=>NAME_RE.test(r.name)).length / rows.length >= 0.8;
+
+  const header = ['序号',
+    ...(multiSrc ? ['来源文件'] : []),
+    ...(splittable ? ['地区', '镇街', '名称'] : ['名称']),
+    ...colKeys.map(u=>UNIT_LABEL[u] || ('数量（' + u + '）')),
+    ...(hasState ? ['状态'] : [])];
+  const lines = rows.map((r, i) => {
+    let nameCells;
+    if(splittable){
+      const m = r.name.match(NAME_RE);
+      nameCells = m ? [m[1], m[2], m[3]] : ['', '', r.name];
+    }else nameCells = [r.name];
+    const cells = [String(i+1), ...(multiSrc ? [r.src] : []), ...nameCells,
+      ...colKeys.map(u=>r.nums[u] || ''),
+      ...(hasState ? [r.state] : [])];
+    return '| ' + cells.join(' | ') + ' |';
+  });
+  return {
+    count: rows.length,
+    table: '| ' + header.join(' | ') + ' |\n| ' + header.map(()=>'---').join(' | ') + ' |\n' + lines.join('\n')
+  };
+}
+
+/* ============ 长材料处理中枢 ============ */
+/* 思路和 Github 上 DocSummarizer / LlamaIndex 的 map-reduce 一致：
+   材料切成小片 → 每片单独处理 → 合并（必要时分层再合并）。
+   所有分片共用同一段提示词（固定前缀），llama.cpp 的 prompt cache 能命中，
+   prefill 只需要算一次，长材料能快一大截。 */
+let flowCache = null;   // 上一轮分批任务的现场，用于「补第 X 段」
+
+/* 粗估 token：中文按 1 字 1 token，英文按 3.5 字符 1 token，宁可估多 */
+function estTok(s){
+  const t = String(s || '');
+  let cjk = 0;
+  for(let i=0;i<t.length;i++){
+    const c = t.charCodeAt(i);
+    if(c >= 0x3040) cjk++;
+  }
+  return Math.ceil(cjk * 1.05 + (t.length - cjk) * 0.3);
+}
+
+/* 分片：优先在段落/句号处断开，片与片之间留一点重叠，避免一句话被切断 */
+function splitSmart(text, size, overlap){
+  const s = String(text || '').replace(/\r/g, '');
+  if(s.length <= size) return [s];
+  const paras = s.split(/\n+/).filter(p => p.trim());
+  const out = [];
+  let cur = '';
+  const flush = () => { if(cur.trim()) out.push(cur.trim()); cur = ''; };
+
+  for(const p of paras){
+    if(p.length >= size * 1.3){
+      flush();
+      const sents = p.split(/(?<=[。！？；!?;])/);
+      let seg = '';
+      for(const sn of sents){
+        if(seg && (seg + sn).length > size){ out.push(seg.trim()); seg = sn; }
+        else seg += sn;
+      }
+      if(seg.trim()) out.push(seg.trim());
+      continue;
+    }
+    const next = cur ? cur + '\n' + p : p;
+    if(next.length > size){
+      const tail = overlap ? cur.slice(-overlap) : '';
+      flush();
+      cur = (tail ? tail + '\n' : '') + p;
+    }else{
+      cur = next;
+    }
+  }
+  flush();
+  return out.length ? out : [s];
+}
+
+/* 按上下文窗口算片长：上下文 - 输出预留 - 系统提示 - 安全边际，再取 2/3 */
+function planChunks(text, outTok, opts){
+  const o = opts || {};
+  const reserve = (o.reserve || 0);
+  const sysTok = o.sysTok || 420;
+  const safe = 320;
+  let budget = CTX_NOW - outTok - sysTok - safe - reserve;
+  if(budget < 600) budget = 600;
+  let size = Math.floor(budget * 0.66);
+  /* 中文一字约一 token；片太长模型容易走神，片太短又切碎语义 */
+  size = Math.max(o.min || 900, Math.min(o.max || 3600, size));
+  return size;
+}
+
+/* 智能抽读：材料超过 SMART_LIMIT（3 万字）时不再全文精读——
+   读入量摆在那里，任何电脑都要等几个小时。改成从头、中、尾均匀抽
+   SCAN_CHUNKS 段，保住全文结构，时间一定在几分钟内。 */
+function smartScanBlocks(material){
+  const n = Math.max(4, Math.min(SCAN_CHUNKS, Math.max(4, Math.round(material.length / 6000))));
+  const size = Math.min(2200, Math.max(600, Math.floor(material.length / n)));
+  const blocks = [];
+  for(let i = 0; i < n; i++){
+    const start = n > 1 ? Math.floor((material.length - size) * i / (n - 1)) : 0;
+    const seg = material.slice(start, start + size);
+    blocks.push(`【抽读 ${i + 1}/${n}，位于全文 ${Math.round(start / Math.max(material.length, 1) * 100)}% 处】\n` + seg);
+  }
+  return blocks;
+}
+
+/* 判断这份材料该走哪条道 */
+function materialKind(text, sk, exportKind){
+  const t = String(text || '');
+  const id = (sk && sk.id) || 'free';
+  if(exportKind === 'xlsx' || (sk && sk.out === 'xlsx')) return 'sheet';
+  if(/整理成?表格|做成表|转成表|excel|Excel|统计表|台账/.test(t)) return 'sheet';
+  if(id === 'key' || id === 'short') return 'points';
+  if(id === 'polish' || id === 'gw-style') return 'rewrite';
+  if(id === 'check' || id === 'gw-check') return 'check';
+  if(/提取要点|提炼|摘要|概括|总结一下|梳理要点|压缩|缩写|提纲/.test(t)) return 'points';
+  if(/润色|改写|改稿|改成书面|规范一下|语病/.test(t)) return 'rewrite';
+  if(/挑刺|审读|找问题|哪里不对|通读/.test(t)) return 'check';
+  if(id === 'gw-summary' || id === 'gw-minutes') return 'points';   // 总结/纪要先提炼再写
+  return 'doc';
+}
+
+/* 要点去重合并：去掉编号后比对前 14 字，太像的只留一条 */
+function mergePoints(parts){
+  const seen = new Set(), out = [];
+  for(const p of parts){
+    for(let line of String(p || '').split('\n')){
+      line = line.trim();
+      if(!line || /^[-—=]{3,}$/.test(line)) continue;
+      line = line.replace(/^[-*•·]\s*/, '').replace(/^\d+[.、)）]\s*/, '').replace(/^[（(]\d+[)）]\s*/, '');
+      if(line.length < 4) continue;
+      const key = line.replace(/[\s，。、；：,.;:]/g, '').slice(0, 14);
+      if(seen.has(key)) continue;
+      seen.add(key);
+      out.push(line);
+    }
+  }
+  return out;
+}
+
+/* 分批任务的统一执行器：逐片跑、失败重试、不中断、带进度和预计时间 */
+async function runBlocks(o){
+  const {blocks, sys, mkAsk, maxTokens, el, label, signal, model, onSave} = o;
+  const body = el.querySelector('.body');
+  const t0 = Date.now();
+  const outs = new Array(blocks.length).fill('');
+  const bad = [];
+  const costs = [];
+  let done = 0;
+
+  const showProg = () => {
+    const sec = Math.floor((Date.now() - t0) / 1000);
+    let eta = '';
+    if(costs.length){
+      const avg = costs.reduce((a, b) => a + b, 0) / costs.length;
+      const left = blocks.length - done;
+      if(left > 0) eta = ` · 预计还需 ${fmtDur(avg * left / 1000)}`;
+    }else if(o.estPerChunk){
+      eta = ` · 预计还需 ${fmtDur(o.estPerChunk * (blocks.length - done))}`;
+    }
+    body.innerHTML = `<div class="waiting">${label}：第 ${Math.min(done + 1, blocks.length)}/${blocks.length} 段`
+      + ` · 已用 ${fmtDur(sec)}${eta}`
+      + `<br><span style="font-size:11.5px">材料 ${o.chars || 0} 字，分 ${blocks.length} 段处理，不会截断；中途可以点「停止」，已处理的不会丢</span>`
+      + '<i>…</i></div>'
+      + (() => {
+          try{
+            const t = o.tail ? o.tail(outs, done) : '';
+            return t ? `<div style="margin-top:8px;font-size:12px;color:#6b6459;background:#fff;border:1px solid #e6e0d6;border-radius:8px;padding:8px 10px">`
+              + `已经做出来的部分（实时更新，后面接着做）：<br>${t}</div>` : '';
+          }catch(e){ return ''; }
+        })();
+    scrollBottom();
+  };
+
+  for(let i = 0; i < blocks.length; i++){
+    if(signal && signal.aborted) break;
+    showProg();
+    const ts = Date.now();
+    let out = '', ok = false;
+    for(let att = 0; att < 3 && !ok; att++){
+      try{
+        out = await callOnce(sys, mkAsk(i), maxTokens, model, signal);
+        ok = true;
+      }catch(e){
+        if(e.name === 'AbortError') throw e;
+        if(att < 2) await new Promise(r => setTimeout(r, 600 * (att + 1)));
+      }
+    }
+    if(ok){
+      outs[i] = String(out || '').trim();
+      costs.push(Date.now() - ts);
+    }else{
+      bad.push(i + 1);
+    }
+    done++;
+    if(onSave) { try{ onSave(outs, bad, done); }catch(e){} }
+  }
+  return {outs, bad, costs, ms: Date.now() - t0};
+}
+
+/* 长材料主流程：要点 / 改写 / 审读 / 压缩，四类共用 */
+async function runLongFlow(o){
+  const {kind, material, el, model, exportKind, sysHint, signal, ask} = o;
+  const body = el.querySelector('.body');
+  const tools = el.querySelector('.tools');
+  if(tools) tools.style.opacity = 0;
+  const t0 = Date.now();
+
+  const head = sysHint ? sysHint + '\n\n' : '';
+  /* 注意：这几段提示词必须逐字固定，分片之间不能有任何差异，否则缓存失效 */
+  const SYS = {
+    points: head + '你是信息提取工具。把下面这段材料里的要点提取出来，规则：\n'
+      + '1. 只输出要点清单，每行一条，以「- 」开头，不要编号，不要表头，不要总结段；\n'
+      + '2. 一条一件事，每条不超过 30 字，保留数字、单位、时间、主体；\n'
+      + '3. 最多 6 条，只挑真正重要的，宁可少写不要凑数；\n'
+      + '4. 不改写、不评价、不补充原文没有的内容；\n'
+      + '5. 直接输出清单，不要思考过程，不要解释。',
+    rewrite: head + '你是文字润色工具。把下面这段材料改写得更规范，规则：\n'
+      + '1. 保持原意和事实，不增删信息，不编造；\n'
+      + '2. 口语词、网络词改成书面语，长句拆短；\n'
+      + '3. 删掉「进行、切实、进一步、高度重视」这类空词；\n'
+      + '4. 只输出改写后的正文，不要标题、不要说明、不要评价；\n'
+      + '5. 直接输出，不要思考过程。',
+    check: head + '你是文稿审读工具。只挑这段材料里最容易被挑毛病的 1 处，规则：\n'
+      + '1. 输出两行：第一行「原句：……」第二行「改成：……」；\n'
+      + '2. 只挑真的有问题的地方，看不出来就只输出「无」；\n'
+      + '3. 不写条款号、不写标准出处；\n'
+      + '4. 直接输出，不要思考过程。'
+  }[kind] || head + '你是文字处理工具。按用户要求处理这段材料，直接输出结果，不要解释。';
+
+  /* 片长：改写要小片保证质量；提取要点可以大一点，片数少更快 */
+  const outTok = kind === 'rewrite' ? 1600 : (kind === 'check' ? 300 : 420);
+  const size = planChunks(material, outTok, kind === 'rewrite' ? {max: 1600, min: 800} : {max: 3400, min: 1200});
+  const scan = !!o.scan;
+  const blocks = o.blocks || (scan ? smartScanBlocks(material)
+    : splitSmart(material, size, kind === 'rewrite' ? 0 : 100));
+  const estPerChunk = Math.max(5, Math.round(estFlowSec(
+    scan ? blocks.reduce((a, b) => a + b.length, 0) : material.length, kind) / blocks.length));
+  const label = kind === 'points' ? (scan ? '正在抽读全文、提炼要点' : '正在分片提炼要点')
+    : kind === 'rewrite' ? '正在分片改写'
+    : kind === 'check' ? '正在分片审读' : '正在分片处理';
+
+  /* 开跑前先把「要等多久」说清楚，用户不会以为卡死了 */
+  if(blocks.length >= 3){
+    toast(`这份材料 ${material.length} 字，分 ${blocks.length} 段，预计约 ${fmtDur(estPerChunk * blocks.length)}，进度会实时显示`);
+  }
+
+  flowCache = {kind, blocks, outs: [], bad: [], sys: SYS, model, size, material, ask};
+
+  const r = await runBlocks({
+    blocks, sys: SYS, model, signal, el, label,
+    chars: material.length,
+    estPerChunk,
+    maxTokens: outTok,
+    tail: (outs) => kind === 'points'
+      ? mergePoints(outs).slice(-4).map(p => '· ' + esc(p)).join('<br>')
+      : (kind === 'rewrite' ? esc(String(outs.filter(Boolean).slice(-1)[0] || '').slice(-260)) : ''),
+    mkAsk: i => `【第 ${i + 1}/${blocks.length} 段】\n${blocks[i]}`,
+    onSave: (outs, bad, done) => { if(flowCache){ flowCache.outs = outs.slice(); flowCache.bad = bad.slice(); } }
+  });
+
+  if(signal && signal.aborted){
+    flowCache = Object.assign(flowCache || {}, {outs: r.outs, bad: r.bad});
+    body.innerHTML = md(`已停止。已完成 ${r.outs.filter(Boolean).length}/${blocks.length} 段，进度已经存着，说一句「接着处理」就从断的地方继续。`);
+    return {stopped: true};
+  }
+
+  /* ---------- 合并 ---------- */
+  let finalText = '', extra = '';
+  if(kind === 'points'){
+    let pts = mergePoints(r.outs);
+    /* 要点太多（超过 18 条）→ 再来一层合并，避免把一屏塞满 */
+    if(pts.length > 18){
+      body.innerHTML = `<div class="waiting">已提取 ${pts.length} 条要点，正在合并去重<i>…</i></div>`;
+      try{
+        const merged = await callOnce(head + '你是信息编辑。把下面这些要点合并成一份清单：\n'
+          + '1. 同一件事只留一条，重复的合并；\n'
+          + '2. 最多 15 条，每条不超过 30 字；\n'
+          + '3. 按重要性排序；\n'
+          + '4. 只输出「- 」开头的清单，不要解释，不要思考过程。',
+          pts.map((p, i) => (i + 1) + '. ' + p).join('\n'), 700, model, signal);
+        const again = mergePoints([merged]);
+        if(again.length >= 3) pts = again;
+      }catch(e){ /* 合并失败就用原来的 */ }
+    }
+    finalText = pts.map(p => '- ' + p).join('\n');
+  }else if(kind === 'rewrite'){
+    finalText = r.outs.map(s => s.trim()).filter(Boolean).join('\n\n');
+  }else if(kind === 'check'){
+    const items = r.outs.map(s => s.trim()).filter(s => s && !/^无[。.]?$/.test(s));
+    finalText = items.slice(0, 5).join('\n\n');
+  }else{
+    finalText = r.outs.map(s => s.trim()).filter(Boolean).join('\n\n');
+  }
+
+  const secs = Math.max(1, Math.round((Date.now() - t0) / 1000));
+  const okCnt = r.outs.filter(Boolean).length;
+  const headLine = kind === 'points' ? `材料 ${material.length} 字，分 ${blocks.length} 段提炼，得到 **${mergePoints([finalText]).length} 条要点**，用时 ${fmtDur(secs)}。`
+    : kind === 'rewrite' ? `材料 ${material.length} 字，分 ${blocks.length} 段改写，已按原顺序拼接，用时 ${fmtDur(secs)}。`
+    : kind === 'check' ? `材料 ${material.length} 字，分 ${blocks.length} 段审读，挑出 ${Math.min(5, r.outs.filter(s => s && !/^无/.test(s.trim())).length)} 处，用时 ${fmtDur(secs)}。`
+    : `材料 ${material.length} 字，分 ${blocks.length} 段处理，用时 ${fmtDur(secs)}。`;
+
+  if(r.bad.length){
+    extra = `\n\n> 第 ${r.bad.join('、')} 段没跑出来（引擎无响应）。可以直接说「补第 ${r.bad.join('、')} 段」，我只补这几段再合并，不用整份重跑。`;
+  }
+  /* 抽读模式：必须老实告诉用户这是抽读，不是逐字全量 */
+  if(scan){
+    extra += `\n\n> 这份材料 ${material.length} 字，整篇逐字处理要几个小时，所以按头、中、尾均匀抽读了 ${blocks.length} 段（覆盖全文结构）。要做逐字全量，把文件拆成每块 2 万字以内再发，一块一块来，每块只需要一两分钟。`;
+  }
+  if(o.note) extra += `\n\n> ${o.note}`;
+  const summary = headLine + (r.bad.length ? '' : (scan ? '抽读段落全部处理完了。' : '全部段落都处理完了，没有漏。'));
+
+  body.innerHTML = md(summary + extra + (finalText ? '\n\n' + finalText : '\n\n（没提取到内容，换个说法再试一次）'));
+
+  const all = summary + extra + (finalText ? '\n\n' + finalText : '');
+  messages.push({role: 'assistant', content: all});
+  wireTools(el, () => finalText || all);
+  saveCur();
+  const ref = document.createElement('div');
+  ref.className = 'refs';
+  ref.textContent = `${scan ? '智能抽读' : '分段处理'} ${blocks.length} 段 · 每段约 ${size} 字 · 用时 ${fmtDur(secs)}`
+    + (r.bad.length ? ` · 失败 ${r.bad.length} 段` : '');
+  el.querySelector('.bubble').appendChild(ref);
+  if(exportKind && finalText) autoExport(el, finalText, exportKind);
+  scrollBottom();
+  return {text: finalText, bad: r.bad, secs};
+}
+
+/* 补跑指定的几段（用户说「补第 2、5 段」时） */
+async function resumeBadBlocks(el, idxs){
+  if(!flowCache || !flowCache.blocks){
+    el.querySelector('.body').innerHTML = md('上一轮没有可以补的分段。把材料重新发一次，我整份处理。');
+    return;
+  }
+  const {blocks, outs, sys, model, kind} = flowCache;
+  const body = el.querySelector('.body');
+  const t0 = Date.now();
+  const left = idxs.filter(i => i >= 1 && i <= blocks.length);
+  for(let k = 0; k < left.length; k++){
+    const i = left[k] - 1;
+    body.innerHTML = `<div class="waiting">正在补第 ${i + 1} 段（${k + 1}/${left.length}）<i>…</i></div>`;
+    try{
+      outs[i] = await callOnce(sys, `【第 ${i + 1}/${blocks.length} 段】\n${blocks[i]}`,
+        kind === 'rewrite' ? 1600 : 600, model, controller && controller.signal);
+    }catch(e){ /* 留着下次再补 */ }
+  }
+  const pts = kind === 'points' ? mergePoints(outs) : null;
+  const text = pts ? pts.map(p => '- ' + p).join('\n') : outs.map(s => (s || '').trim()).filter(Boolean).join('\n\n');
+  const stillBad = outs.map((s, i) => s ? 0 : i + 1).filter(Boolean);
+  const note = stillBad.length ? `\n\n> 还有第 ${stillBad.join('、')} 段没出来，可以再说一次「补第 ${stillBad.join('、')} 段」。` : '';
+  body.innerHTML = md(`已补完，用时 ${Math.max(1, Math.round((Date.now() - t0) / 1000))} 秒。` + note + (text ? '\n\n' + text : ''));
+  messages.push({role: 'assistant', content: text});
+  wireTools(el, () => text);
+  saveCur();
+  scrollBottom();
+}
+
+
+/* ============ 发送 ============ */
+/* ---------- 长材料自动分批（24K 字塞不进上下文，硬塞只会中途断） ---------- */
+function splitBlocks(text, size){
+  const paras = String(text || '').replace(/\r/g,'').split(/\n+/).filter(x=>x.trim());
+  const out = []; let cur = '';
+  for(const p of paras){
+    if(p.length >= size){
+      if(cur){ out.push(cur); cur = ''; }
+      for(let i=0;i<p.length;i+=size) out.push(p.slice(i, i+size));
+      continue;
+    }
+    const next = cur ? cur + '\n' + p : p;
+    if(next.length > size){ out.push(cur); cur = p; }
+    else cur = next;
+  }
+  if(cur) out.push(cur);
+  return out;
+}
+
+/* 模型输出 → {表头, 数据行}，自动跳过重复表头和 |---| 分隔线 */
+function rowsFromTableMd(t){
+  /* 模型有时不给行首竖线（尤其指定了固定表头之后），只按「有没有竖线」判断，
+     否则后面的段会被当成空结果整段丢掉——这是表格缺行的主因 */
+  const lines = String(t||'').split('\n').map(s=>s.trim())
+    .filter(l=>l.includes('|') && !/^[-*+>]\s/.test(l) && !l.startsWith('```'));
+  const cut = l => l.replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
+  let header = null; const rows = [];
+  for(const l of lines){
+    const c = cut(l);
+    if(!c.length || c.every(x=>!x)) continue;
+    if(c.every(x=>/^:?-{2,}:?$/.test(x) || x === '')) continue;
+    const key = c.join('').replace(/[\s\-—_]/g,'');
+    if(!header){ header = c; continue; }
+    if(key === header.join('').replace(/[\s\-—_]/g,'')) continue;
+    rows.push(c);
+  }
+  return {header, rows};
+}
+
+/* 单次非流式调用 */
+async function callOnce(sys, user, maxTokens, model, signal){
+  const r = await fetch(API + '/v1/chat/completions', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    signal,
+    body: JSON.stringify({
+      model,
+      messages:[{role:'system', content:sys}, {role:'user', content:user}],
+      stream:false, temperature:0.15, max_tokens:maxTokens || 1200,
+      cache_prompt: true,
+      chat_template_kwargs:{enable_thinking:false}
+    })
+  });
+  if(!r.ok) throw new Error('引擎返回 ' + r.status);
+  const j = await r.json();
+  return j.choices?.[0]?.message?.content || '';
+}
+
+/* 分批把长材料转成表格：一批一批来，不会中途断，最后合并成一张完整的表 */
+let tableCache = null;   // 停止时把进度留在这里，用户说「接着处理」就从断点续
+async function sendTableFlow(o){
+  const {blocks, el, model, exportKind, sysHint, scan, seedRows, seedHeader, startAt} = o;
+  const body = el.querySelector('.body');
+  el.querySelector('.tools').style.opacity = 0;
+  const t0 = Date.now();
+  const estPerChunk = Math.max(4, Math.round(estFlowSec(
+    blocks.reduce((a, b) => a + b.length, 0), 'sheet') / blocks.length));
+  if(blocks.length >= 3){
+    toast(`这份材料要分 ${blocks.length} 批整理，预计约 ${fmtDur(estPerChunk * blocks.length)}，进度会实时显示`);
+  }
+  const ruleFor = (hd) => (sysHint ? sysHint + '\n\n' : '你是表格抽取工具。\n\n')
+    + '把下面这段材料转成表格，规则很硬：\n'
+    + '1. 材料里有几条记录就输出几行，不许合并、不许跳过、不许总结、不许挑重点；\n'
+    + '2. 第一行输出表头，第二行输出 |---|---| 分隔线，之后每行一条记录；\n'
+    + '3. 数字原样抄，不要换算单位（亩还是亩、万元还是万元），字段缺失就留空；\n'
+    + '4. 每行列数必须和表头一致；不要解释、不要标题、不要代码块。\n'
+    + (hd ? `\n表头统一用这一行，不要改：${hd.join(' | ')}` : '');
+  const base = startAt || 0;                      // 续跑时从第 base 段开始
+  let header = seedHeader || null;
+  const headers = []; const rows = (seedRows || []).slice(); const bad = [];
+  let okCount = 0;
+
+  let lastTail = [];   /* 记住最近一次抽到的行，后面刷新进度时继续显示 */
+  const prog = (i, note, tail) => {
+    if(tail) lastTail = tail;
+    tail = lastTail;
+    const sec = Math.floor((Date.now()-t0)/1000);
+    const total = blocks.length + base;
+    let eta = '';
+    const doneNow = i - base;              /* 本轮已完成的段数（续跑时从 0 起） */
+    if(doneNow > 1) eta = ` · 预计还需 ${fmtDur(sec / doneNow * (total - i + 1))}`;
+    else if(total > i) eta = ` · 预计还需 ${fmtDur(estPerChunk * (total - i + 1))}`;
+    body.innerHTML = `<div class="waiting">正在分批整理表格：第 ${i}/${total} 段 · 已整理 ${rows.length} 行 · 已等 ${fmtDur(sec)}${eta}`
+      + (note ? `<br><span style="font-size:11.5px">${note}</span>` : '') + '<i>…</i></div>'
+      + (tail && tail.length
+        ? `<div style="margin-top:8px;font-size:12px;color:#6b6459;background:#fff;border:1px solid #e6e0d6;border-radius:8px;padding:8px 10px">`
+          + `先做出来的部分（实时更新，后面还接着做）：<br><span style="font-family:Consolas,monospace;font-size:11.5px">`
+          + tail.slice(-5).map(r => esc(r.join(' | '))).join('<br>') + '</span></div>'
+        : '');
+    scrollBottom();
+  };
+
+  for(let i=0;i<blocks.length;i++){
+    if(controller && controller.signal.aborted) break;
+    prog(base + i + 1);
+    const ask = `【材料第 ${base + i + 1}/${blocks.length + base} 段】\n${blocks[i]}`;
+    const sys = ruleFor(header);
+    let out = '';
+    try{
+      out = await callOnce(sys, ask, Math.min(1400, 160 + Math.round(blocks[i].length * 0.55)), model, controller && controller.signal);
+    }catch(e){
+      if(e.name === 'AbortError') break;
+      try{
+        await new Promise(r=>setTimeout(r, 700));
+        out = await callOnce(sys, ask, Math.min(1400, 160 + Math.round(blocks[i].length * 0.55)), model, controller && controller.signal);
+      }catch(e2){
+        if(e2.name === 'AbortError') break;
+        bad.push(i+1);
+      }
+    }
+    let p = rowsFromTableMd(out);
+    /* 这一段一行都没解析出来（偶发格式跑偏），去掉固定表头再试一次，别整段丢 */
+    if(!p.rows.length && header){
+      try{
+        const out2 = await callOnce(ruleFor(null), ask, Math.min(1400, 160 + Math.round(blocks[i].length * 0.55)), model, controller && controller.signal);
+        p = rowsFromTableMd(out2);
+      }catch(e){}
+    }
+    if(p.header) headers.push(p.header);
+    rows.push(...p.rows);
+    okCount++;
+    /* 第一批定下表头，后面各批都按它对齐 */
+    if(!header && p.header && p.rows.length) header = p.header;
+    /* 留个断点：中途停止也不白做 */
+    tableCache = {blocks, next: base + i + 1, rows: rows.slice(), header, sysHint, scan};
+    /* 每段做完就把已经抽到的行亮出来，别让人干等 */
+    if(i < blocks.length - 1 && rows.length) prog(base + i + 2, `前 ${base + i + 1} 段已完成，接着做后面的…`, rows);
+  }
+
+  /* 列数取出现最多的那种，避免某一批多输出一列把整张表带歪 */
+  const freq = {};
+  rows.forEach(r=>{ freq[r.length] = (freq[r.length]||0) + 1; });
+  const cols = Number(Object.keys(freq).map(Number).sort((a,b)=> freq[b]-freq[a] || b-a)[0] || 0);
+  let hd = headers.find(h=>h.length === cols) || header;
+  if(!hd || !hd.length) hd = Array.from({length: cols}, (_,i)=>'列' + (i+1));
+  if(hd.length !== cols){
+    hd = hd.slice(0, cols);
+    while(hd.length < cols) hd.push('列' + (hd.length+1));
+  }
+  const norm = rows.filter(r=>r.length).map(r=>{
+    const a = r.slice(0, cols);
+    while(a.length < cols) a.push('');
+    return a;
+  });
+  const table = cols
+    ? '| ' + hd.join(' | ') + ' |\n| ' + hd.map(()=>'---').join(' | ') + ' |\n'
+      + norm.map(r=>'| ' + r.join(' | ') + ' |').join('\n')
+    : '';
+
+  const secs = Math.floor((Date.now()-t0)/1000);
+  const aborted = !!(controller && controller.signal.aborted);
+  let summary;
+  if(aborted){
+    /* 停止时不能显示「0 行」让人觉得白等：把已经做出来的先给用户，并告诉他怎么续 */
+    summary = norm.length
+      ? `已停止。这次做完 ${okCount}/${blocks.length + base} 段，已整理 **${norm.length} 行**，先给你这些。\n\n> 说一句「**接着处理**」，我从第 ${base + okCount + 1} 段接着做，不用从头再来。`
+      : `已停止，还没有整理出完整的行。\n\n> 说一句「**接着处理**」就从断的地方重新开始；想快一点可以先说「先看大概」。`;
+  }else{
+    summary = `已把 ${blocks.length + base} 段材料合并成一张表：**${norm.length} 行 × ${cols} 列**，共 ${fmtDur(secs)}。`
+      + (scan ? `\n\n> 材料太大，按头、中、尾抽读了 ${blocks.length + base} 段整理（不是逐行全量）。要一行不漏，把文件拆成每块 2 万字以内再发。` : '')
+      + (bad.length ? `\n\n> 第 ${bad.join('、')} 段没整理出来（引擎返回失败），可以直接说「补第 ${bad.join('、')} 段」，我只补那几段。` : '');
+    tableCache = null;   // 全部做完，断点清掉
+  }
+  body.innerHTML = md(summary + (table ? '\n\n' + table : (aborted ? '' : '\n\n（没整理出表格，换个说法再试）')));
+
+  const finalText = summary.replace(/\*\*/g,'') + (table ? '\n\n' + table : '');
+  messages.push({role:'assistant', content: finalText});
+  wireTools(el, ()=> finalText);
+  saveCur();
+  const m = document.createElement('div');
+  m.className = 'refs';
+  m.textContent = `${scan ? '智能抽读' : '分批处理'} ${blocks.length + base} 批 · ${aborted ? '已停止' : '用时 ' + fmtDur(secs)}`;
+  el.querySelector('.bubble').appendChild(m);
+  if(table && exportKind) autoExport(el, table, exportKind);
+  if(table && !exportKind) toast('表格已生成，可点下面「导出 Excel」存成文件');
+  scrollBottom();
+}
+
+function buildContext(sysText){
+  /* 历史里可能有几千字的长材料，原样带上第二句就超窗口了。
+     超过 4000 字的旧消息只留头尾，中间省略。 */
+  const hist = messages.slice(-HIST_TURNS*2).map(m=>{
+    const c = String(m.content || '');
+    if(c.length > 4000){
+      return {role:m.role, content: c.slice(0, 2400) + '\n……（中间省略 ' + (c.length-3600) + ' 字）……\n' + c.slice(-1200)};
+    }
+    return {role:m.role, content:c};
+  });
+  return [{role:'system', content:sysText || curSkill().sys}, ...hist];
+}
+function attachBlock(limit){
+  if(!attachments.length) return '';
+  let left = limit || MAX_ATTACH, parts = [];
+  for(const a of attachments){
+    const cut = a.text.slice(0, Math.max(0,left));
+    if(!cut) break;
+    left -= cut.length;
+    parts.push(`【${a.name}】\n${cut}${cut.length < a.text.length ? `\n（原文 ${a.text.length} 字，这里只给了前 ${cut.length} 字。要接着看后面的，把剩余部分单独发一次）` : ''}`);
+  }
+  return '\n\n' + parts.join('\n\n');
+}
+
+async function send(){
+  if(streaming) return;
+  const text = input.value.trim();
+  if(!text && !attachments.length) return;
+  if(!engineOK){ $('#mask').classList.add('on'); return; }
+
+  // 先取长期记忆 + 从本机资料库检索相关段落（都是本地操作，毫秒级）
+  let mem = '', hits = [];
+  try{
+    mem = await Store.memText();
+    const q = [text, ...attachments.map(a=>a.text.slice(0,800))].join(' ').slice(0,1500);
+    if(q.trim().length > 3) hits = await Store.search(q, 3);
+  }catch(e){ console.warn('资料库不可用', e); }
+
+  const sk = curSkill();
+  /* 用户这句话里如果说了「导出成 Excel/Word/PPT」，等会儿自动下文件 */
+  const exportKind = detectExport(text);
+  let sysText = sk.sys;
+
+  /* ---------- 公文专家（v1.5.0）：只注入当前文种那一张卡 ----------
+     20 张文种全塞进去，4B 模型会写乱；一次只给它要写的那一张，700 字以内。 */
+  let gwGenre = null;
+  if(window.GW && sk.genre){
+    const probe = text || (attachments[0] && attachments[0].text.slice(0, 400)) || '';
+    gwGenre = sk.genre === 'auto' ? GW.detect(probe) : sk.genre;
+    if(gwGenre){
+      sysText = GW.cardText(gwGenre) + '\n\n' + sysText;
+    }else{
+      sysText = '【本次未判明文种】先根据内容判断该用哪种法定文种：通知、请示、报告、批复、函、通报、意见、纪要等。'
+        + '判完直接按该文种的规范结构起草，第一行就是标题，不要加任何说明或前言。'
+        + '在最后「需要你补充」那一段里加一句「本文按××文种写」。\n\n' + sysText;
+    }
+  }
+
+  /* 导入的技能可能很长，8K 上下文放不下，截一下保命 */
+  if(sysText.length > 2600){
+    sysText = sysText.slice(0, 2600);
+    console.warn('技能提示词较长，已截断到 2600 字：', sk.name);
+  }
+  if(mem) sysText += `\n\n【关于我和我的单位（长期记忆，优先遵守）】\n${mem}`;
+  if(hits.length){
+    sysText += `\n\n【本机资料库里的相关原文，回答时优先依据它】\n`
+      + hits.map((h,i)=>`(${i+1}) 出自《${h.title}》\n${h.text}`).join('\n\n')
+      + `\n\n资料与你的常识冲突时，以资料为准；资料里没写的，不要编。`;
+  }
+
+  if(exportKind) sysText += exportHint(exportKind);
+
+  const shown = text || '（见附件）';
+  if(attachments.length > 1){
+    const merged = attachments.reduce((n2,a)=>n2 + a.text.length, 0);
+    toast(`正在把 ${attachments.length} 个文件当成一份材料处理（共 ${merged} 字），结果是合在一起的一份。`, 3200);
+  }
+  /* 材料：有附件就是附件内容，没有就是输入框里粘的正文 */
+  const material = attachments.length
+    ? attachments.map(a=>`【${a.name}】\n${a.text}`).join('\n\n')
+    : text;
+  const matLen = material.length;
+
+  /* 先认这份材料属于哪类活：表格 / 提要点 / 改写 / 审读 / 起草 */
+  const kind = materialKind(text, sk, exportKind);
+  const isTable = kind === 'sheet';
+  const flowKind = (!isTable && ['points','rewrite','check'].includes(kind)) ? kind : null;
+
+  /* 要表格 → 一律走表格通道（先规则抽，不行再分批）；
+     提要点/改写/审读 → 超过 2200 字就分段，短材料单次生成更快；
+     起草类 → 材料当参考，按上下文窗口动态决定带多少。 */
+  const bigTable = isTable && matLen > 200;
+  const bigFlow = !!flowKind && matLen > 2200;
+  /* 超过 3 万字：全文精读要十几二十分钟，自动改「智能抽读」，保证几分钟内有结果。
+     用户也可以主动说「抽读」「先看大概」，小材料也走快通道 */
+  const oversize = matLen > SMART_LIMIT;
+  /* 说「全文/一行不漏」= 强制全量（大材料会等很久，页面会先报时间）；
+     说「抽读/先看大概」= 快速通道 */
+  const forceFull = /全文|逐字|一行不漏|全部处理|全量/.test(String(text || ''));
+  const wantScan = oversize ? !forceFull : /抽读|先看大概|快速看一遍|粗略看/.test(String(text || ''));
+
+  /* 「补第 2、5 段」：只补失败的那几段，不整份重跑 */
+  const fixNums = (function(){
+    const m = String(text||'').match(/(?:补|重跑|重新处理|再跑)第?\s*([\d、,，\s]+?)\s*段/);
+    if(!m) return null;
+    const ns = m[1].split(/[^\d]+/).map(Number).filter(n => n > 0);
+    return ns.length ? ns : null;
+  })();
+  if(fixNums && flowCache){
+    messages.push({role:'user', content:text, shown:text});
+    if(!curTask){ const tid = await Store.addTask(); curTask = await Store.getTask(tid); }
+    addMsg('user', text);
+    saveCur();
+    input.value=''; input.style.height='auto'; $('#count').textContent='';
+    attachments=[]; renderChips();
+    const elR = addMsg('assistant','');
+    streaming = true; controller = new AbortController();
+    const btnR = $('#btnSend'); btnR.textContent='停止'; btnR.classList.add('stop');
+    try{ await resumeBadBlocks(elR, fixNums); }
+    catch(e){ elR.querySelector('.body').innerHTML = `<p style="color:#A8A296">（补段中断：${esc(e.message)}）</p>`; }
+    finally{ streaming=false; controller=null; btnR.textContent='发送'; btnR.classList.remove('stop'); }
+    return;
+  }
+
+  /* 表格做到一半停了：说「接着处理」就从断点续，不从头再来 */
+  if(tableCache && !attachments.length && /接着处理|继续处理|接着做|继续做/.test(String(text || ''))){
+    messages.push({role:'user', content:text || '接着处理', shown:text || '接着处理'});
+    if(!curTask){ const tid = await Store.addTask(); curTask = await Store.getTask(tid); }
+    addMsg('user', text || '接着处理');
+    saveCur();
+    const elC = addMsg('assistant','');
+    streaming = true;
+    const btnT = $('#btnSend'); btnT.textContent='停止'; btnT.classList.add('stop');
+    controller = new AbortController();
+    input.value=''; input.style.height='auto'; $('#count').textContent='';
+    const c = tableCache;
+    try{
+      await sendTableFlow({
+        blocks: c.blocks.slice(c.next),
+        el: elC, model: (MODEL_IDS.length > 1 ? curModelId : undefined),
+        exportKind: detectExport(text), sysHint: c.sysHint, scan: c.scan,
+        seedRows: c.rows, seedHeader: c.header, startAt: c.next
+      });
+    }catch(e){
+      elC.querySelector('.body').innerHTML = `<p style="color:#A8A296">（续跑中断：${esc(e.message)}）</p>`;
+    }finally{
+      streaming=false; controller=null;
+      btnT.textContent='发送'; btnT.classList.remove('stop');
+    }
+    return;
+  }
+
+  /* 起草类材料太长时，按上下文算能带多少（原来死写 6000，浪费了一半窗口） */
+  const attachLimit = Math.max(3000, Math.min(9000, CTX_NOW - 4200 - estTok(sysText) - 500));
+  const truncated = !bigTable && !bigFlow && matLen > attachLimit;
+
+  const userContent = (bigTable || bigFlow)
+    ? `${text || '看看这份材料。'}（材料共 ${matLen} 字，已分段处理）`
+    : (text || '看看这份材料。') + attachBlock(attachLimit)
+      + (truncated ? `\n\n（材料共 ${matLen} 字，本机上下文放不下全部，这次带的是前 ${attachLimit} 字。要全文逐段处理，直接说「全文提炼要点」或「整理成表格」，我会分段跑完，一行不漏。）` : '');
+  messages.push({role:'user', content:userContent, shown: shown});
+  /* 这个任务还没有落地的话，先把它存进资料库（第一条消息一发出就算正式任务） */
+  if(!curTask){
+    const tid = await Store.addTask();
+    curTask = await Store.getTask(tid);
+  }
+  addMsg('user', shown);
+  saveCur();
+
+  input.value=''; input.style.height='auto'; $('#count').textContent='';
+  attachments=[]; renderChips();
+
+  /* 多模型模式下带上选中的模型；换模型后第一条消息会重新加载引擎，慢一点 */
+  const sendModelId = MODEL_IDS.length > 1 ? curModelId : undefined;
+  const switching = sendModelId && lastSentModel && sendModelId !== lastSentModel;
+  const useThink = thinkModel();
+
+  /* 长材料 + 要表格 → 分批整理，不走单次生成（否则必断） */
+  if(bigTable){
+    const el2 = addMsg('assistant','');
+    streaming = true;
+    const btn2 = $('#btnSend');
+    btn2.textContent='停止'; btn2.classList.add('stop');
+    controller = new AbortController();
+    try{
+      /* 先试极速模式：结构化材料直接抽，几毫秒出表，不跑模型。
+         超大材料跳过（几千万字跑正则会把页面卡住），直接走抽读 */
+      const q = wantScan ? null : quickTable(material);
+      if(q){
+        const t1 = Date.now();
+        const body2 = el2.querySelector('.body');
+        const summary = `已按原文直接抽成表格：**${q.count} 行**，用时 1 秒左右。数字全部照抄原文，没有改写、没有估算（同一单位出现多个数时取第一个）；要换字段或让模型重新归纳，说一句「用模型重做这张表」即可。`;
+        body2.innerHTML = md(summary + '\n\n' + q.table);
+        const ft = summary.replace(/\*\*/g, '') + '\n\n' + q.table;
+        messages.push({role:'assistant', content: ft});
+        wireTools(el2, ()=> ft);
+        saveCur();
+        const ref = document.createElement('div');
+        ref.className = 'refs';
+        ref.textContent = `极速模式（规则抽取） · 用时 ${Math.max(1, Math.round((Date.now()-t1)/1000))} 秒`;
+        el2.querySelector('.bubble').appendChild(ref);
+        if(exportKind) autoExport(el2, q.table, exportKind);
+        toast('已用极速模式抽表，数字取自原文');
+        scrollBottom();
+      }else{
+        const scan = wantScan;
+        const blocks = scan ? smartScanBlocks(material) : splitBlocks(material, CHUNK);
+        await sendTableFlow({blocks, el: el2, model: sendModelId, exportKind, sysHint: sk.sys, scan});
+      }
+    }catch(e){
+      el2.querySelector('.body').innerHTML = `<p style="color:#A8A296">（分批处理中断：${esc(e.message)}）</p>`;
+    }finally{
+      streaming = false; controller = null;
+      btn2.textContent='发送'; btn2.classList.remove('stop');
+    }
+    return;
+  }
+
+  /* 长材料 + 提要点 / 改写 / 审读 → 分段跑，最后合并，一片不落 */
+  if(bigFlow){
+    const elF = addMsg('assistant','');
+    streaming = true;
+    const btnF = $('#btnSend'); btnF.textContent='停止'; btnF.classList.add('stop');
+    controller = new AbortController();
+    try{
+      /* 超大材料的改写/审读没法整篇来，转成「抽读+提要点」，并说明原因 */
+      const scan = wantScan;
+      let effKind = flowKind, note = '';
+      if(scan && (flowKind === 'rewrite' || flowKind === 'check')){
+        effKind = 'points';
+        note = `这份材料 ${matLen} 字，整篇${flowKind === 'rewrite' ? '改写' : '审读'}要几个小时，本次先抽读全文、把关键内容提出来。要整篇改，请把文件拆成每块 2 万字以内再发。`;
+      }
+      await runLongFlow({kind: effKind, material, el: elF, model: sendModelId,
+        exportKind, sysHint: sk.sys, signal: controller.signal, scan, note});
+    }catch(e){
+      if(e.name !== 'AbortError')
+        elF.querySelector('.body').innerHTML = `<p style="color:#A8A296">（分段处理中断：${esc(e.message)}）</p>`;
+    }finally{
+      streaming=false; controller=null;
+      btnF.textContent='发送'; btnF.classList.remove('stop');
+    }
+    return;
+  }
+
+  const el = addMsg('assistant','');
+  const body = el.querySelector('.body');
+  el.querySelector('.tools').style.opacity = 0;
+
+  streaming = true;
+  const btn = $('#btnSend');
+  btn.textContent='停止'; btn.classList.add('stop');
+
+  controller = new AbortController();
+  let acc = '', thinkLen = 0, started = false;
+  thinkTxt = '';
+
+  /* 读秒提示：等待的每一秒都显示出来，让人知道没卡死 */
+  const t0 = Date.now();
+  let waitTimer = null;
+  const expLabel = exportKind ? exportKind.replace('xlsx','Excel').replace('docx','Word').replace('pptx','PPT') : '';
+  function updWait(thinkLen){
+    if(started) return;
+    const sec = Math.floor((Date.now() - t0) / 1000);
+    const bits = [];
+    if(switching) bits.push('已切换模型，首次要加载十几秒');
+    if(thinkLen) bits.push('已想 ' + thinkLen + ' 字');
+    bits.push('已等 ' + sec + ' 秒');
+    if(expLabel) bits.push('完成后自动导出 ' + expLabel);
+    let hint = '';
+    if(useThink && sec >= 120 && thinkLen < 400)
+      hint = '<br><span style="font-size:11.5px;color:#B4553F">已经两分钟还没出正文。正常 8B 模型一秒能出十几个字，这么慢多半是<b>内存不够、模型被挤到硬盘上跑了</b>。建议：① 关掉其它浏览器标签和程序；② 点下面「停止」，换回 4B 模型（快 3 倍以上）。</span>';
+    else if(useThink && sec >= 20)
+      hint = '<br><span style="font-size:11.5px">DeepSeek 会先思考一大段再回答，这是它的特点、不是卡住，等它想完就会出正文</span>';
+    body.innerHTML = `<div class="waiting">${useThink ? '正在思考' : '正在生成'}（${bits.join(' · ')}）<i>…</i>${hint}</div>`;
+  }
+  updWait(0);
+  waitTimer = setInterval(()=> updWait(thinkLen), 1000);
+
+  let finishReason = '';
+  let contRound = 0;
+  const contPrefix = () => acc.length > 9000
+    ? acc.slice(0, 1200) + '\n……（中间省略）……\n' + acc.slice(-6500)
+    : acc;
+
+  try{
+    while(true){
+      const isCont = contRound > 0;
+      const ctx = isCont ? [
+        {role:'system', content:'接着上面的内容继续写。直接从断掉的地方往下续，不要重复已经写过的内容，不要重新开头，不要重复表头，不要解释。'},
+        {role:'assistant', content: contPrefix()},
+        {role:'user', content:'继续。'}
+      ] : buildContext(sysText);
+
+      const resp = await fetch(API + '/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: sendModelId,
+          messages: ctx,
+          stream:true,
+          temperature: isCont ? 0.2 : 0.35,
+          top_p:0.9,
+          cache_prompt: true,
+          max_tokens: useThink ? 6144 : ((sk.out === 'docx' || exportKind === 'pptx') ? 2400 : (exportKind === 'xlsx' ? 1600 : 1200)),
+          ...(useThink ? {} : {chat_template_kwargs:{enable_thinking:false}})
+        })
+      });
+      if(!resp.ok){
+        /* 把引擎的错误变成用户能照着做的提示 */
+        let emsg = '引擎返回 ' + resp.status;
+        try{
+          const j = await resp.json();
+          if(j && j.error && j.error.message) emsg = j.error.message;
+        }catch(e){}
+        if(/exceed|context size|上下文/i.test(emsg))
+          throw new Error('这段材料太长，一次放不下（本机上下文约 ' + Math.round(CTX_NOW*0.9) + ' 字）。\n两个办法：\n① 把材料存成文件拖进来，会自动分批处理；\n② 拆成 3000 字以内一段，分几次发。');
+        throw new Error('引擎返回 ' + resp.status + '：' + emsg);
+      }
+
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value, {stream:true});
+      const parts = buf.split('\n\n');
+      buf = parts.pop();
+      for(const p of parts){
+        const line = p.split('\n').find(l=>l.startsWith('data:'));
+        if(!line) continue;
+        const payload = line.slice(5).trim();
+        if(payload === '[DONE]') continue;
+        try{
+          const j = JSON.parse(payload);
+          const fr = j.choices?.[0]?.finish_reason;
+          if(fr) finishReason = fr;
+          const d = j.choices?.[0]?.delta || {};
+          if(d.reasoning_content){ thinkLen += d.reasoning_content.length; thinkTxt += d.reasoning_content; }
+          if(d.content){
+            if(!started){
+              started = true; acc = '';
+              if(waitTimer){ clearInterval(waitTimer); waitTimer = null; }
+            }
+            acc += d.content;
+            body.innerHTML = md(acc) + '<span class="cursor"></span>';
+            scrollBottom();
+          }else if(!started && thinkLen){
+            updWait(thinkLen);
+          }
+        }catch(e){}
+      }
+    }
+
+      /* 被长度上限截断 → 自动接着写，最多两次；不用用户再点「继续」 */
+      if(finishReason !== 'length' || contRound >= 2 || (controller && controller.signal.aborted)) break;
+      contRound++;
+      body.innerHTML = md(acc)
+        + `<div class="waiting" style="margin-top:8px">内容较长，已到单次长度上限，正在自动接着写（第 ${contRound} 次）…</div>`;
+      scrollBottom();
+    }
+
+    /* 兜底：思考过程把输出额度吃光，正文一个字都没出来（DeepSeek 常见）。
+       自动关掉思考，用「直接回答」模式再要一次，不用用户重发。 */
+    if(!acc.trim() && thinkLen > 200 && !(controller && controller.signal.aborted)){
+      body.innerHTML = `<div class="waiting">思考太长，把输出额度用完了，正在改用「直接回答」模式重试（已等 ${Math.floor((Date.now()-t0)/1000)} 秒）<i>…</i></div>`;
+      scrollBottom();
+      try{
+        const sv = await callOnce(sysText,
+          (text || '看看这份材料。') + attachBlock(attachLimit),
+          2200, sendModelId, controller && controller.signal);
+        if(sv && sv.trim()){
+          acc = sv.trim();
+          finishReason = 'stop';
+        }
+      }catch(e2){ /* 还是不行就走下面的提示 */ }
+    }
+  }catch(e){
+    if(e.name !== 'AbortError'){
+      const msg = String(e.message || '');
+      if(/Failed to fetch|NetworkError|Load failed|network error/i.test(msg)){
+        acc += `\n\n（连不上本地引擎。检查那个叫「本地助手引擎」的黑窗口还在不在，关了或崩了就重新双击启动脚本，再点「重试」）`;
+      }else{
+        acc += `\n\n（出错了：${msg}）`;
+      }
+    }
+  }finally{
+    if(waitTimer){ clearInterval(waitTimer); waitTimer = null; }
+    streaming=false; controller=null;
+    const secs = Math.floor((Date.now() - t0) / 1000);
+    btn.textContent='发送'; btn.classList.remove('stop');
+    const out = clean(acc).trim();
+    const isErr = /连不上本地引擎|（出错了/.test(out) && out.length < 400;
+    body.innerHTML = out ? md(out) : '<p style="color:#A8A296">（没有输出，换个说法再试一次）</p>';
+    if(isErr){
+      const rb = document.createElement('button');
+      rb.textContent = '重试';
+      rb.style.cssText = 'margin-top:8px;background:#17324D;color:#fff;border:0;border-radius:7px;padding:5px 16px;font-size:12.5px;cursor:pointer;font-family:inherit';
+      rb.onclick = ()=>{ if(streaming) return; messages.pop(); send(); };
+      body.appendChild(rb);
+    }
+    if(thinkTxt.trim()){
+      const d1 = document.createElement('details');
+      d1.className = 'thinkbox';
+      d1.innerHTML = `<summary>思考过程（${thinkTxt.length} 字，点开看）</summary><div class="think-body">${esc(thinkTxt).replace(/\n/g,'<br>')}</div>`;
+      body.appendChild(d1);
+    }
+    if(out && !isErr){
+      messages.push({role:'assistant', content:out});
+      lastSentModel = sendModelId || '';
+      wireTools(el, ()=> out);
+      saveCur();
+      if(exportKind) autoExport(el, out, exportKind);
+    }
+    if(out && secs >= 5){
+      const m = document.createElement('div');
+      m.className = 'refs';
+      m.textContent = '本次用时 ' + secs + ' 秒';
+      el.querySelector('.bubble').appendChild(m);
+    }
+    if(hits.length){
+      const r = document.createElement('div');
+      r.className = 'refs';
+      r.textContent = '用到了资料：' + [...new Set(hits.map(h=>h.title))].join('、');
+      el.querySelector('.bubble').appendChild(r);
+    }
+    scrollBottom();
+  }
+}
+function clean(t){
+  return t.replace(/<think[\s\S]*?<\/think>/g,'').replace(/^[\s\S]*?<\/think>/,'').trimStart();
+}
+function regenerate(){
+  if(streaming) return;
+  if(messages.length && messages[messages.length-1].role==='assistant') messages.pop();
+  const last = messages.pop();
+  if(!last) return;
+  input.value = last.content.replace(/\n\n【[\s\S]*$/,'');
+  input.dispatchEvent(new Event('input'));
+  send();
+}
+function scrollBottom(){ chat.scrollTop = chat.scrollHeight; }
+
+$('#btnSend').onclick = ()=>{ if(streaming){ controller && controller.abort(); } else send(); };
+$('#btnClear').onclick = ()=>{
+  if(streaming) return;
+  messages=[]; attachments=[]; renderChips();
+  renderAll();
+  updateSkillBar();
+  if(curTask){
+    curTask.msgs = [];
+    curTask.title = '新任务';
+    Store.saveTask(curTask).then(()=>refreshTasks());
+  }
+};
+
+/* ============ 资料库 / 记忆 ============ */
+const drawer = $('#drawer');
+let curTab = 'doc';
+
+$('#btnDrawer').onclick = ()=>{ drawer.classList.add('on'); refreshKB(); };
+$('#drClose').onclick = ()=> drawer.classList.remove('on');
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    curTab = t.dataset.t;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x===t));
+    $('#paneDoc').style.display = curTab==='doc' ? 'block' : 'none';
+    $('#paneMem').style.display = curTab==='mem' ? 'block' : 'none';
+    $('#paneSkill').style.display = curTab==='skill' ? 'block' : 'none';
+    $('#footKB').style.display = curTab==='skill' ? 'none' : 'flex';
+    $('#footSK').style.display = curTab==='skill' ? 'flex' : 'none';
+    if(curTab==='skill') renderSkillsPanel();
+  };
+});
+
+async function refreshKB(){
+  try{
+    const [docs, mem, st] = await Promise.all([Store.listDocs(), Store.listMem(), Store.stats()]);
+    $('#docCount').textContent = st.docs;
+    $('#memCount').textContent = st.mem;
+    $('#docList').innerHTML = docs.length ? docs.sort((a,b)=>b.addedAt-a.addedAt).map(d=>`
+      <div class="item"><b>${esc(d.title)}</b>
+        <span>${d.size} 字 · ${new Date(d.addedAt).toLocaleDateString('zh-CN')} · ${d.chunks.length} 段</span>
+        <button class="del" data-id="${d.id}">×</button></div>`).join('')
+      : `<div class="empty">还没有资料。<br>把常用的制度、口径粘进去，它回答时就会照着来。</div>`;
+    $('#memList').innerHTML = mem.length ? mem.sort((a,b)=>b.addedAt-a.addedAt).map(m=>`
+      <div class="item"><p style="margin-top:0;max-height:none">${esc(m.text)}</p>
+        <button class="del" data-id="${m.id}">×</button></div>`).join('')
+      : `<div class="empty">还没有记忆。<br>写下你的单位、常用称谓、落款习惯，以后就不用每次重复。</div>`;
+    $('#docList').querySelectorAll('.del').forEach(b=> b.onclick = async ()=>{ await Store.deleteDoc(+b.dataset.id); refreshKB(); toast('已删除'); });
+    $('#memList').querySelectorAll('.del').forEach(b=> b.onclick = async ()=>{ await Store.deleteMem(+b.dataset.id); refreshKB(); toast('已删除'); });
+  }catch(e){ console.error(e); }
+}
+
+$('#docSave').onclick = async ()=>{
+  const t = $('#docText').value.trim();
+  if(t.length < 30) return toast('太短了，至少 30 字');
+  await Store.addDoc('粘贴的资料 ' + new Date().toLocaleDateString('zh-CN'), t);
+  $('#docText').value=''; refreshKB(); toast('已存进资料库');
+};
+$('#docPick').onclick = ()=> $('#fileKB').click();
+$('#fileKB').onchange = async e =>{
+  const files = [...e.target.files]; e.target.value='';
+  for(const f of files){
+    try{
+      const r = await extractText(f);
+      if(!r.text || r.text.trim().length < 8){ toast(`「${f.name}」内容太少（${(r.text||'').trim().length} 字），没入库`); continue; }
+      await Store.addDoc(f.name, r.text);
+      toast(`「${f.name}」已入库（${r.kind||'文本'}）`);
+    }catch(err){ alert(`「${f.name}」没读出来：${err.message}`); }
+  }
+  refreshKB();
+};
+$('#memSave').onclick = async ()=>{
+  const t = $('#memText').value.trim();
+  if(t.length < 4) return toast('写具体一点');
+  await Store.addMem(t);
+  $('#memText').value=''; refreshKB(); toast('记住了');
+};
+$('#btnExportKB').onclick = async ()=>{
+  const json = await Store.exportAll();
+  const blob = new Blob([json], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '资料包_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast('已导出，换机器时再导入');
+};
+$('#btnImportKB').onclick = ()=> $('#kbFile').click();
+$('#kbFile').onchange = async e =>{
+  const f = e.target.files[0]; e.target.value='';
+  if(!f) return;
+  try{
+    const r = await Store.importAll(await f.text());
+    toast(`导入 ${r.docs} 份资料、${r.mem} 条记忆`);
+    refreshKB();
+  }catch(err){ alert('导入失败：' + err.message); }
+};
+refreshKB();
+initTasks();
+
+/* ============ 技能库面板 ============ */
+let editingId = null;
+
+function renderSkillsPanel(){
+  const box = $('#skList');
+  if(!box || !window.Skills) return;
+  const all = Skills.all();
+  $('#skCount').textContent = all.filter(s=>s.enabled).length;
+  let html = '';
+  ['常用','公文','图表','演示','办公','我的'].forEach(g=>{
+    const arr = all.filter(s=>s.g === g);
+    if(!arr.length) return;
+    html += `<div style="font-size:11px;color:var(--gray);padding:10px 0 4px;letter-spacing:1px">${g}</div>`;
+    arr.forEach(s=>{
+      const tags = (s.builtin ? '' : '<span class="badge">自制</span>') +
+                   (s.enabled ? '' : '<span class="badge off">已停用</span>');
+      const src = s.src ? `<span class="src-line">来源：${esc(s.src)}</span>` : '';
+      html += `<div class="item" data-id="${s.id}">
+        <b>${esc(s.name)}${tags}</b>
+        <span>${esc(s.desc || '')}</span>
+        ${src}
+        <div class="sk-act">
+          <button data-a="use">用这个</button>
+          <button data-a="toggle">${s.enabled ? '停用' : '启用'}</button>
+          ${s.builtin
+            ? '<button data-a="derive">复制一份改</button>'
+            : '<button data-a="edit">编辑</button><button data-a="exp">导出</button><button data-a="del">删除</button>'}
+        </div>
+        ${s.builtin ? '' : '<button class="del" data-a="del">×</button>'}
+      </div>`;
+    });
+  });
+  box.innerHTML = html || '<div class="empty">技能列表空了，点下面「清空自制」旁边看看</div>';
+
+  box.querySelectorAll('.item').forEach(it=>{
+    const id = it.dataset.id;
+    it.querySelectorAll('[data-a]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const s = Skills.get(id);
+        if(!s) return;
+        const a = btn.dataset.a;
+        if(a === 'use'){ pickSkill(id); drawer.classList.remove('on'); toast('已切换到「' + s.name + '」'); }
+        else if(a === 'toggle'){ Skills.enable(id, !s.enabled); renderSkillsPanel(); refreshSkillUI(); }
+        else if(a === 'edit'){ loadForm(s); editingId = id; }
+        else if(a === 'derive'){
+          const nid = Skills.add({ name: s.name + '（改）', g:'我的', desc: s.desc, sys: s.sys, src: '改自内置技能' });
+          renderSkillsPanel(); refreshSkillUI(); toast('已复制到「我的」，点编辑就能改');
+          const t = Skills.get(nid); if(t) loadForm(t); editingId = nid;
+        }
+        else if(a === 'exp'){ downloadText(Skills.exportOne(id), s.name + '.skill.json', 'application/json'); }
+        else if(a === 'del'){
+          if(!confirm('删除技能「' + s.name + '」？删了就找不回来了（内置技能不受影响）')) return;
+          Skills.remove(id); renderSkillsPanel(); refreshSkillUI();
+          if(curSkillId === id) pickSkill('free');
+        }
+      };
+    });
+  });
+}
+
+function loadForm(s){
+  $('#skName').value = s.name || '';
+  $('#skDesc').value = s.desc || '';
+  $('#skSys').value = s.sys || '';
+  const g = s.g || '我的';
+  const sel = $('#skGroup');
+  if([...sel.options].some(o=>o.value === g)) sel.value = g;
+  else sel.value = '我的';
+  $('#skSave').textContent = '保存修改';
+  $('#skCancel').style.display = 'inline-block';
+  $('#skSys').focus();
+}
+function resetForm(){
+  editingId = null;
+  $('#skName').value = ''; $('#skDesc').value = ''; $('#skSys').value = '';
+  $('#skGroup').value = '我的';
+  $('#skSave').textContent = '保存为新技能';
+  $('#skCancel').style.display = 'none';
+}
+$('#skCancel').onclick = resetForm;
+
+$('#skSave').onclick = ()=>{
+  const name = $('#skName').value.trim();
+  const sys = $('#skSys').value.trim();
+  const desc = $('#skDesc').value.trim();
+  const g = $('#skGroup').value;
+  if(!name) return toast('先给技能起个名字');
+  if(sys.length < 10) return toast('提示词太短，至少 10 个字');
+  if(editingId){
+    Skills.update(editingId, { name: name, g: g, desc: desc, sys: sys });
+    toast('已保存修改');
+  }else{
+    const id = Skills.add({ name: name, g: g, desc: desc, sys: sys });
+    curSkillId = id;
+    toast('已保存，左侧「我的」里能看到');
+    drawer.classList.remove('on');
+  }
+  const keep = editingId || curSkillId;
+  resetForm(); renderSkillsPanel(); refreshSkillUI();
+  const s = Skills.get(keep); if(s) pickSkill(s.id);
+};
+
+$('#btnSkills').onclick = ()=>{
+  drawer.classList.add('on');
+  document.querySelector('.tab[data-t="skill"]').click();
+};
+$('#btnImportSK').onclick = ()=> $('#skFile').click();
+$('#skFile').onchange = async e =>{
+  const fs = [...e.target.files]; e.target.value = '';
+  if(!fs.length) return;
+  const items = [];
+  for(const f of fs){ items.push({ name: f.name, text: await f.text() }); }
+  const r = Skills.importMany(items, '我的');
+  let msg = '导入了 ' + r.added + ' 个技能' + (r.names.length ? '：\n' + r.names.join('、') : '');
+  if(r.failed.length) msg += '\n\n没导入成功：\n' + r.failed.join('\n');
+  if(r.warn.length) msg += '\n\n提示：\n' + r.warn.join('\n');
+  alert(msg);
+  renderSkillsPanel(); refreshSkillUI();
+};
+$('#btnExportSK').onclick = ()=>{
+  const c = Skills.count();
+  if(!c.custom) return toast('还没有自制技能，内置技能跟着程序走，不用导出');
+  downloadText(Skills.exportAll(), '我的技能_' + new Date().toISOString().slice(0,10) + '.json', 'application/json');
+};
+$('#btnResetSK').onclick = ()=>{
+  const c = Skills.count();
+  if(!c.custom) return toast('本来就没有自制技能');
+  if(!confirm('清空自己加/导入的 ' + c.custom + ' 个技能？内置的不受影响。')) return;
+  Skills.clearCustom(); renderSkillsPanel(); refreshSkillUI();
+  if(!Skills.get(curSkillId)) pickSkill('free');
+  toast('已清空');
+};
+
+function downloadText(text, filename, mime){
+  const blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ============ 作者联系方式 ============ */
+const WX = 'zx6530022';
+function copyWx(){
+  const done = ()=> toast('微信号已复制：' + WX);
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(WX).then(done, ()=> fallback());
+    } else fallback();
+  }catch(e){ fallback(); }
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = WX; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); done();
+  }
+}
+$('#btnWx').onclick = ()=> $('#wxMask').classList.add('on');
+$('#wxMask').onclick = e =>{ if(e.target.id === 'wxMask') $('#wxMask').classList.remove('on'); };
+$('#wxCopy').onclick = copyWx;
+$('#wxCopy2').onclick = copyWx;
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){ $('#wxMask').classList.remove('on'); $('#helpMask').classList.remove('on'); }
+});
+
+/* ============ 帮助 ============ */
+$('#verTxt').textContent = APP_VER;
+$('#btnHelp').onclick = ()=> $('#helpMask').classList.add('on');
+$('#helpClose').onclick = ()=> $('#helpMask').classList.remove('on');
+$('#helpMask').onclick = e=>{ if(e.target.id === 'helpMask') $('#helpMask').classList.remove('on'); };
+$('#helpFull').onclick = ()=>{ window.open('使用说明.html', '_blank'); $('#helpMask').classList.remove('on'); };
+$('#helpTpl').onclick = ()=>{ window.open('提示词模板.html', '_blank'); };
+$('#helpVideo').onclick = ()=>{ window.open('使用说明视频.mp4', '_blank'); };
+
+/* 授权状态（启动脚本写的，只在本机读） */
+(async function(){
+  try{
+    const r = await fetch('授权状态.json', { cache:'no-store' });
+    if(!r.ok) throw 0;
+    const j = await r.json();
+    const code = String(j.code || '');
+    $('#licText').textContent = code ? code.slice(0, 4) + '-****-' + code.slice(-2) : '已授权';
+    $('#licText').title = '机器码 ' + (j.machine || '') + ' · 激活于 ' + (j.at || '');
+  }catch(e){
+    $('#licText').textContent = '未读到';
+    $('#licText').title = '正常从「启动」脚本进入才会有授权记录';
+  }
+})();
+
+$('#btnExport').onclick = ()=>{
+  if(!messages.length) return toast('还没有内容');
+  const tn = (curTask && curTask.title && curTask.title !== '新任务') ? ' · ' + curTask.title : '';
+  const t = '# 本地办公助手 · 对话记录' + tn + '\n\n' + messages.map(m=>
+    `## ${m.role==='user'?'我':'助手'}\n\n${m.content}`).join('\n\n---\n\n');
+  saveFile(t);
+};
+</script>
+</body>
+</html>

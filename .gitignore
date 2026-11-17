@@ -1,0 +1,18 @@
+# 大模型不入库，见 README「大模型：本仓库不含」
+模型/
+*.gguf
+*.gguf.part1
+*.gguf.part2
+*.gguf.part3
+
+# 运行时生成的授权与日志文件（含机器信息，不入库）
+授权/序列号.txt
+授权/授权记录.txt
+*.log
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.env

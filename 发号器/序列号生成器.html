@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>序列号生成器 · 本地办公助手专用（作者专用）</title>
+<style>
+:root{--ink:#17324D;--ink2:#3A5269;--gray:#787E88;--line:#DBD6CC;--paper:#F7F5F0;--red:#AA3E30;--ok:#3F7A5A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  background:var(--paper);color:var(--ink);font-size:14px;line-height:1.7;padding:28px 20px 60px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:20px;letter-spacing:.3px}
+.sub{color:var(--gray);font-size:12.5px;margin:4px 0 18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+h2{font-size:15px;margin-bottom:10px}
+.notice{background:#FBF0DF;border-left:3px solid #A87C26;padding:10px 12px;border-radius:6px;
+  font-size:12.5px;color:#6E5420;margin-bottom:16px;line-height:1.7}
+.warn{background:#FBEAE7;border-left:3px solid var(--red);padding:10px 12px;border-radius:6px;
+  font-size:12.5px;color:#7C2E22;margin-bottom:16px;line-height:1.7}
+code{background:#F1EDE4;padding:1px 5px;border-radius:4px;font-size:12.5px}
+textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.7;resize:vertical;background:#FCFBF8;color:var(--ink)}
+textarea:focus{outline:0;border-color:#B9AE99}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+button{font-family:inherit;font-size:13px;border:1px solid var(--line);background:#fff;color:var(--ink2);
+  border-radius:7px;padding:6px 14px;cursor:pointer}
+button:hover{border-color:#B9AE99;color:var(--ink)}
+button.pri{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+button.pri:hover{background:#0F2438;color:#fff}
+input[type=text]{border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-family:inherit;
+  font-size:13px;background:#FCFBF8;color:var(--ink);flex:1;min-width:160px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+th{background:#F1EDE4;font-weight:700;font-size:12.5px}
+td.mono{font-family:ui-monospace,Consolas,monospace;letter-spacing:.5px}
+.empty{color:var(--gray);font-size:12.5px;padding:14px 0;text-align:center}
+.hint{font-size:12px;color:var(--gray);margin-top:8px}
+.res{font-size:13px;margin-top:10px;padding:10px 12px;border-radius:8px;display:none}
+.res.ok{display:block;background:#EAF3EE;color:#2C5C42}
+.res.bad{display:block;background:#FBEAE7;color:#8A3325}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>序列号生成器 · 本地办公助手专用</h1>
+  <div class="sub">按机器码发号 · 离线校验 · 与「公文合规校正系统」的 GW2A 号完全不通</div>
+  <div style="font-size:12px;color:#8A7A55;margin-top:6px">作者：汤姆汤汤汤　·　微信 zx6530022　·　© 2026 保留所有权利</div>
+
+  <div class="warn">
+    <b>这个文件不要随软件发出去。</b>里面是发号算法，拿到就能自己生成序列号。只在自己的电脑上开着用。
+  </div>
+
+  <div class="notice">
+    <b>格式：</b><code>BGS9-XXXX-XXXX-XXXX-XX</code>（4 段，前三段 4 位、末段 2 位）<br>
+    <b>为什么和以前的号不通用：</b>前缀不同（旧 <code>GW2A</code> / 新 <code>BGS9</code>）、段数不同（旧 5 段 / 新 4 段）、
+    算法不同（旧用 FNV 变体 + 固定盐，新用三路哈希按机器码派生）。旧号粘进来会直接提示「另一套系统的号」。<br>
+    <b>一台机器一个号：</b>号是由机器码算出来的，别人拿去用会提示「和本机机器码对不上」。同一台机器重复申请得到的是同一个号，不会生成第二个。
+  </div>
+
+  <div class="card">
+    <h2>① 批量发号</h2>
+    <div class="hint" style="margin-top:0">把使用者报来的机器码贴进来，一行一个（带不带横线都行，大小写不敏感）。</div>
+    <textarea id="in" placeholder="CG7E-PNL4&#10;8NDG-KVT6"></textarea>
+    <div class="row">
+      <input type="text" id="who" placeholder="备注：发给谁 / 哪台机器（可留空，会写进台账）">
+      <button class="pri" id="gen">生成序列号</button>
+      <button id="copy">复制结果</button>
+      <button id="csv">导出 CSV</button>
+      <button id="clear">清空</button>
+    </div>
+    <div id="out"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 校验一个号</h2>
+    <div class="row" style="margin-top:0">
+      <input type="text" id="vMc" placeholder="机器码，如 CG7E-PNL4">
+      <input type="text" id="vSn" placeholder="序列号，如 BGS9-8YJA-3HF9-U6RP-WX">
+      <button id="ver">校验</button>
+    </div>
+    <div class="res" id="vres"></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 使用流程</h2>
+    <div class="hint" style="margin-top:0;line-height:1.9">
+      1. 使用者双击启动，窗口显示「本机机器码」，他截图或抄给你；<br>
+      2. 你把机器码贴进①，点生成，把 <code>BGS9-…</code> 那串发回去；<br>
+      3. 他在启动窗口粘贴回车，程序在 <code>授权\序列号.txt</code> 记下，下次直接进；<br>
+      4. 把这次发号补登到 <code>序列号台账.md</code>（或直接导出 CSV 粘进去）。<br><br>
+      <b>他那台机器重装系统后</b>机器码会变，需要重新发号；<b>换电脑</b>同样。这两个情况都属于正常。
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== 算法：必须与 授权检查.ps1 / 授权检查.sh 完全一致 ===== */
+var ALPHA = '23456789ABCDEFGHJKLMNPQRTUVWXY';
+
+function H(s, seed) {
+  var h = seed >>> 0;
+  for (var i = 0; i < s.length; i++) {
+    h = (Math.imul(h, 33) + s.charCodeAt(i)) >>> 0;
+  }
+  return h >>> 0;
+}
+function enc(n, len) {
+  var s = '', i;
+  for (i = 0; i < len; i++) { s += ALPHA[n % 30]; n = Math.floor(n / 30); }
+  return s;
+}
+function machineCode(F) {
+  var f = String(F).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var h1 = H('BGS9|M|' + f + '|v1', 5381);
+  var h2 = H('BGS9|M|' + f + '|v2', 52711);
+  var a = enc(h1, 4) + enc(h2, 4);
+  return a.slice(0, 4) + '-' + a.slice(4);
+}
+function tagOf(mc) {
+  var m = mc.replace(/[^A-Z0-9]/g, '');
+  var st = H('BGS9|T|' + m + '|2026', 2166136261), s = '', i;
+  for (i = 0; i < 12; i++) { st = H(String(st) + ':' + i, st); s += ALPHA[st % 30]; }
+  return s;
+}
+function chkOf(tag) {
+  return ALPHA[H('BGS9|C|' + tag + '|a', 7919) % 30] + ALPHA[H('BGS9|C|' + tag + '|b', 104729) % 30];
+}
+function serialOf(mc) {
+  var t = tagOf(mc);
+  return 'BGS9-' + t.slice(0, 4) + '-' + t.slice(4, 8) + '-' + t.slice(8, 12) + '-' + chkOf(t);
+}
+function norm(code) {
+  return String(code || '').toUpperCase().replace(/[\s\u3000]/g, '').replace(/[—－]/g, '-');
+}
+function verify(mc, code) {
+  var s = norm(code);
+  if (!s) return { ok: false, msg: '序列号是空的' };
+  if (/^GW2A/.test(s)) return { ok: false, msg: '这是「公文合规校正系统」的号（GW2A 开头），本工具用不了' };
+  if (!/^BGS9/.test(s)) return { ok: false, msg: '前缀不对，本工具的号以 BGS9 开头' };
+  if (!/^BGS9-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(s))
+    return { ok: false, msg: '格式不对：应为 BGS9-XXXX-XXXX-XXXX-XX' };
+  var want = serialOf(mc);
+  if (s !== want) return { ok: false, msg: '和这个机器码对不上（正确应是 ' + want + '）' };
+  return { ok: true, msg: '通过：这个号就是发给 ' + norm(mc) + ' 的' };
+}
+
+/* ===== 界面 ===== */
+var $ = function (s) { return document.querySelector(s); };
+var rows = [];
+
+$('#gen').onclick = function () {
+  var list = $('#in').value.split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+  if (!list.length) { alert('先把机器码贴进来，一行一个'); return; }
+  var who = $('#who').value.trim();
+  var seen = {}, out = [];
+  rows = [];
+  list.forEach(function (raw) {
+    var mc = norm(raw);
+    if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(mc)) {
+      out.push({ bad: true, raw: raw, msg: '机器码格式不对，应是 XXXX-XXXX（8 位，含横线）' });
+      return;
+    }
+    if (seen[mc]) { out.push({ bad: true, raw: raw, msg: '重复，上面已经生成过' }); return; }
+    seen[mc] = 1;
+    var sn = serialOf(mc);
+    rows.push({ mc: mc, sn: sn, who: who });
+    out.push({ mc: mc, sn: sn });
+  });
+  if (!rows.length) { $('#out').innerHTML = '<div class="empty">没有可用的机器码</div>'; return; }
+  $('#out').innerHTML = '<table><thead><tr><th style="width:40px">#</th><th>机器码</th><th>序列号</th><th>备注</th></tr></thead><tbody>' +
+    out.map(function (r, i) {
+      if (r.bad) return '<tr><td>' + (i + 1) + '</td><td class="mono">' + esc(r.raw) + '</td><td colspan="2" style="color:#AA3E30">' + esc(r.msg) + '</td></tr>';
+      return '<tr><td>' + (i + 1) + '</td><td class="mono">' + r.mc + '</td><td class="mono"><b>' + r.sn + '</b></td><td>' + esc(who || '—') + '</td></tr>';
+    }).join('') + '</tbody></table>' +
+    '<div class="hint">共 ' + rows.length + ' 个。把这串号发给对方，让他粘贴进启动窗口回车。</div>';
+};
+
+$('#copy').onclick = function () {
+  if (!rows.length) return alert('还没生成');
+  var txt = rows.map(function (r) { return r.mc + '\t' + r.sn + (r.who ? '\t' + r.who : ''); }).join('\n');
+  copy(txt);
+};
+$('#csv').onclick = function () {
+  if (!rows.length) return alert('还没生成');
+  var lines = ['机器码,序列号,备注,发放日期'];
+  var d = new Date();
+  var day = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  rows.forEach(function (r) { lines.push([r.mc, r.sn, r.who || '', day].join(',')); });
+  var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '序列号_' + day + '.csv';
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
+};
+$('#clear').onclick = function () { $('#in').value = ''; $('#out').innerHTML = ''; rows = []; };
+
+$('#ver').onclick = function () {
+  var r = verify($('#vMc').value, $('#vSn').value);
+  var el = $('#vres');
+  el.className = 'res ' + (r.ok ? 'ok' : 'bad');
+  el.textContent = (r.ok ? '✓ ' : '× ') + r.msg;
+};
+
+function copy(t) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(t).then(function () { toast('已复制'); }, fallback);
+  } else fallback();
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove(); toast('已复制');
+  }
+}
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+function toast(m) {
+  var d = document.createElement('div');
+  d.textContent = m;
+  d.style.cssText = 'position:fixed;left:50%;top:24px;transform:translateX(-50%);background:#17324D;color:#fff;padding:7px 16px;border-radius:8px;font-size:13px;z-index:99';
+  document.body.appendChild(d);
+  setTimeout(function () { d.remove(); }, 1400);
+}
+</script>
+</body>
+</html>
