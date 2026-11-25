@@ -6,6 +6,18 @@
 >
 > 给政企单位里不方便联网、不想联网、不能联网的人。
 
+> ### 📥 下载安装（就三步，选对包就行）
+>
+> **① 下载安装包**：👉 [Releases · v1.6.0](https://github.com/Xuxu9527-tommmm/local-office-assistant/releases/tag/v1.6.0)
+> 按电脑选：**Windows 10/11** ｜ **国产电脑（统信 UOS / 银河麒麟 / Deepin）** ｜ **macOS**——大文件也在网盘：百度网盘「我的应用数据/bdpan/本地办公助手v1.6.0」
+>
+> **② 程序包 + 模型包解压到同一个文件夹**
+>
+> **③ 双击启动文件**，完事
+>
+> - **这次更新修了什么**：见 [CHANGELOG.md](CHANGELOG.md)（UOS/麒麟启动修复、页面点不动修复、分平台安装包）
+> - **想自己改公文规则（文种卡/核稿规则）**：去开源源仓库 [gongwen-ai](https://github.com/Xuxu9527-tommmm/gongwen-ai)，改完直接替换回本程序使用
+
 ---
 
 ## 它是什么
