@@ -129,8 +129,8 @@ local-office-assistant/
 
 ## 相关项目
 
-- [gongwen-ai](https://github.com/Xuxu9527-tommmm/gongwen-ai) —— 本助手内置的公文知识层（文种卡、核稿规则），想改规则去那里
-- 完整打包安装版（含说明视频）见本仓库 [Releases](../../releases)
+- [gongwen-ai](https://github.com/Xuxu9527-tommmm/gongwen-ai) —— 本助手内置的公文知识层（文种卡、核稿规则）的**开源源仓库**。本程序是它的"开箱即用"形态：**想整体下载装完就用，留在本仓库拿 [Releases](../../releases) 安装包；想自己修改更新知识层**（加文种卡、改核稿规则、调版式参数）**或嫁接到自己的系统，去 [gongwen-ai](https://github.com/Xuxu9527-tommmm/gongwen-ai)**——那里代码按知识层组织，改完的知识卡可以直接替换进本助手的 `app/` 使用。
+- 各版本变更见本仓库 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可
 
