@@ -113,12 +113,23 @@ chmod +x "$ENGINE" 2>/dev/null
 # 不碰系统那一套，老系统也能跑。
 GLIBC_DIR="$PWD/引擎/$DIR/glibc"
 if [ "$DIR" = "linux-arm64" ]; then
-  LDSO="$GLIBC_DIR/ld-linux-aarch64.so.1"
+  LDSO_SRC="$GLIBC_DIR/ld-linux-aarch64.so.1"
 else
-  LDSO="$GLIBC_DIR/ld-linux-x86-64.so.2"
+  LDSO_SRC="$GLIBC_DIR/ld-linux-x86-64.so.2"
+fi
+# 关键：加载器必须放在"引擎目录"里再调用。
+# 直接调 glibc/ld-linux-*.so 时，程序按 /proc/self/exe 认为自己位于 glibc/ 子目录，
+# 就去那里找 libggml-cpu-*.so，找不到 → "no backends are loaded" → 模型加载失败。
+# 把加载器复制到引擎目录根部再调用，路径就算对了。
+LDSO="$PWD/引擎/$DIR/ld-linux-launcher.so"
+if [ -f "$LDSO_SRC" ]; then
+  [ -f "$LDSO" ] || cp -f "$LDSO_SRC" "$LDSO" 2>/dev/null
+  chmod +x "$LDSO" 2>/dev/null
 fi
 if [ -x "$LDSO" ]; then
   ENGINE_CMD=("$LDSO" --library-path "$GLIBC_DIR:$PWD/引擎/$DIR" "$PWD/$ENGINE")
+elif [ -x "$LDSO_SRC" ]; then
+  ENGINE_CMD=("$LDSO_SRC" --library-path "$GLIBC_DIR:$PWD/引擎/$DIR" "$PWD/$ENGINE")
 else
   ENGINE_CMD=("$PWD/$ENGINE")
 fi
