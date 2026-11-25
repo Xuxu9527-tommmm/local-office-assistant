@@ -11,6 +11,8 @@
 > **① 下载安装包**：👉 [Releases · v1.6.0](https://github.com/Xuxu9527-tommmm/local-office-assistant/releases/tag/v1.6.0)
 > 按电脑选：**Windows 10/11** ｜ **国产电脑（统信 UOS / 银河麒麟 / Deepin）** ｜ **macOS**——大文件也在网盘：百度网盘「我的应用数据/bdpan/本地办公助手v1.6.0」
 >
+> **选包拿不准、想先看别人怎么装的**：👉 [下载页与安装教程](https://www.workbuddy.cn/space/d/CdIz3vS1dxeUJVCR4heUux)（三个系统怎么选、解压要注意什么、国产系统 6 分钟安装视频，免登录可直接转发给同事）
+>
 > **② 程序包 + 模型包解压到同一个文件夹**
 >
 > **③ 双击启动文件**，完事
