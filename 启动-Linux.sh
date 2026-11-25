@@ -221,10 +221,17 @@ echo
 fi
 PID=$!
 
+# 判断"起来了没有"，不依赖 curl：
+# UOS / 麒麟的精简系统经常没装 curl；就算装了，系统若设了 http_proxy，
+# curl 会把 127.0.0.1 的请求也发给代理，明明起来了也判成失败。
+# 这里用 bash 自带的 /dev/tcp 探端口 + 看日志里的 listening 关键字，零依赖。
+LOG=/tmp/本地助手引擎.log
+port_open() { (exec 3<>/dev/tcp/127.0.0.1/"$1") 2>/dev/null; }
+
 ok=0
-for i in $(seq 1 90); do
-  if curl -sf --max-time 2 "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then ok=1; break; fi
+for i in $(seq 1 150); do
   if ! kill -0 $PID 2>/dev/null; then break; fi
+  if grep -q "listening on" "$LOG" 2>/dev/null || port_open "$PORT"; then ok=1; break; fi
   sleep 1
 done
 
@@ -232,20 +239,41 @@ if [ "$ok" != "1" ]; then
   echo
   echo "× 没启动起来。下面这段报错能说明原因："
   echo "--------------------------------------------------"
-  tail -n 15 /tmp/本地助手引擎.log 2>/dev/null
+  tail -n 20 "$LOG" 2>/dev/null
   echo "--------------------------------------------------"
+  if grep -q "listening on" "$LOG" 2>/dev/null; then
+    echo "注意：上面日志里已经有 listening on，说明引擎其实是好的，"
+    echo "      只是启动器没探到。直接用浏览器打开 http://127.0.0.1:$PORT/ 试试。"
+    read -r -p "按回车退出…" _
+    exit 0
+  fi
   echo "常见原因："
   echo "  1) 内存不够（低于 8G 别开 DeepSeek 8B，换通义千问 4B 或 DeepSeek 1.5B）"
   echo "  2) 模型文件没下完整（重新拷一遍）"
-  echo "  3) 缺少系统库（把上面报错发我）"
+  echo "  3) 缺少系统库（把上面报错发我，微信 zx6530022）"
   read -r -p "按回车退出…" _
   kill $PID 2>/dev/null
   exit 1
 fi
 
-# 引擎起来了，但页面可能 404（app 文件夹缺失/不完整）
-PCODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "http://127.0.0.1:$PORT/" 2>/dev/null)
-if [ "$PCODE" != "200" ]; then
+# ---------- 引擎起来了，再确认页面能不能打开 ----------
+# app 文件夹缺失或不完整会 404。取状态码同样不走 curl。
+http_status() {
+  ( exec 3<>/dev/tcp/127.0.0.1/"$1" 2>/dev/null || exit 1
+    printf 'GET %s HTTP/1.0\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n' "$2" >&3 2>/dev/null
+    IFS= read -r -t 5 _line <&3
+    printf '%s' "$_line" ) 2>/dev/null
+}
+SLINE=$(http_status "$PORT" "/")
+PCODE=""
+if [ -n "$SLINE" ]; then
+  read -r _proto PCODE _rest <<< "$SLINE"
+fi
+if [ -z "$PCODE" ] && command -v curl >/dev/null 2>&1; then
+  PCODE=$(curl -s -o /dev/null --noproxy '*' -w "%{http_code}" --max-time 3 "http://127.0.0.1:$PORT/" 2>/dev/null)
+fi
+
+if [ "$PCODE" = "404" ] || [ "$PCODE" = "403" ]; then
   echo
   echo "× 引擎已经起来了，但页面打不开（HTTP $PCODE）。"
   echo "  基本是 app 文件夹缺失或不完整。检查："
@@ -255,9 +283,7 @@ if [ "$PCODE" != "200" ]; then
   echo
 fi
 
-if [ "$PCODE" = "200" ]; then
-  ( xdg-open "http://127.0.0.1:$PORT/" >/dev/null 2>&1 || sensible-browser "http://127.0.0.1:$PORT/" >/dev/null 2>&1 ) &
-fi
+( xdg-open "http://127.0.0.1:$PORT/" >/dev/null 2>&1 || sensible-browser "http://127.0.0.1:$PORT/" >/dev/null 2>&1 || gio open "http://127.0.0.1:$PORT/" >/dev/null 2>&1 ) &
 
 echo "  已就绪，浏览器应该自动打开了。"
 echo "  没打开就手动访问：http://127.0.0.1:$PORT/"
